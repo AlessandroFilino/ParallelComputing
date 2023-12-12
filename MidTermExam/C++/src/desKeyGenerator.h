@@ -6,10 +6,9 @@
 #define DESKEYGENERATOR_H
 
 #include <bitset>
+#include <vector>
 
-using namespace std;
-
-vector<bitset<48>> create_sub_keys(bitset<64> key);
+std::vector<std::bitset<48>> create_sub_keys(std::bitset<64> key);
 
 
 #endif //DESKEYGENERATOR_H

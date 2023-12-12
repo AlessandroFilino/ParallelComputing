@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <sys/time.h>
+#include <math.h>
+#include <cstring>
 
 #include "utility.h"
 #include "desKeyGenerator.h"

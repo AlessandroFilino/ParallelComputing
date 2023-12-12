@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string>
 #include <bitset>
+#include <cstring>
 #include "utility.h"
 
 using namespace std;

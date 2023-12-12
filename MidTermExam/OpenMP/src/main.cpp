@@ -5,6 +5,7 @@
 #include <iostream>
 #include <omp.h>
 #include <unistd.h>
+#include <cmath>
 
 #include "utility.h"
 #include "desKeyGenerator.h"
@@ -26,8 +27,6 @@ using namespace std;
  * 6 threads --> 644.883 s
  * 7 threads --> 618.588 s
  * 8 threads --> 595.119 s
- *
- * Password: 1234
  *
  */
 int main(int argc, char *argv[]) {
@@ -61,16 +60,16 @@ int main(int argc, char *argv[]) {
     long number_of_possible_passwords = (long)pow((double)allowed_char_size, (double)password_length);
 
     // SETUP openMP
-    int number_threads = 4;
+    int number_threads = omp_get_max_threads();
 
     cout << "Inizio attacco brute force con: " << number_threads << " threads" << endl;
     double start_time = omp_get_wtime();
 
-    #pragma omp parallel default(none) shared(chiper_password, sub_keys, start_time, password_length, number_of_possible_passwords, number_threads) num_threads(number_threads)
+    #pragma omp parallel default(none) shared(chiper_password, sub_keys, start_time, password_length, number_of_possible_passwords, number_threads, cout) num_threads(number_threads)
     {
         char password_generate[password_length + 1];
         /*
-         *In questo modo facciamo dei chunk statici degli indici.
+         * In questo modo facciamo dei chunk statici degli indici.
          * Ad esempio se number_of_possible_passwords fosse = 100 e stessi utilizzando 5 threads, ogni threads avrebbe 100/5 iterazioni da gestire
          */
         #pragma omp for schedule(static, number_threads)
