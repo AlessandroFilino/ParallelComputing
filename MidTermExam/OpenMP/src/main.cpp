@@ -18,7 +18,8 @@ using namespace std;
  *  Supponiamo di conoscere la chiave usata in DES e di voler cercare in un set di password se presente quella indicata
  *  Questo tipo di attacco è molto noto.
  *
- * Password: aaab.W/2
+ * Password: 2/W.caaa
+ * MAC M1 Pro 8 core (6 performance + 2 efficiency)
  * 1 threads --> 3635.43 s
  * 2 threads  --> 1870.2 s
  * 3 threads --> 1274.33 s
@@ -28,6 +29,39 @@ using namespace std;
  * 7 threads --> 618.588 s
  * 8 threads --> 595.119 s
  *
+ * LINUX Intel(R) Xeon (R) Silver 4314 CPU @ 2.40GHz (16 core 32 threads)
+ * 1 threads --> 4461.75 s
+ * 2 threads --> 2236.64 s
+ * 3 threads --> 1493.41 s
+ * 4 threads --> 1124.49 s
+ * 5 threads --> 901.942 s
+ * 6 threads --> 756.772 s
+ * 7 threads --> 649.167 s
+ * 8 threads --> 594.315 s
+ * 9 threads --> 521.07 s
+ * 10 threads --> 469.617 s
+ * 11 threads --> 434.817 s
+ * 12 threads --> 398.885 s
+ * 13 threads --> 373.993 s
+ * 14 threads --> 349.434 s
+ * 15 threads --> 327.47 s
+ * 16 threads --> 309.461 s
+ * 17 threads --> 286.749 s
+ * 18 threads --> 279.44 s
+ * 19 threads --> 268.801 s
+ * 20 threads --> 250.751 s
+ * 21 threads --> 236.494 s
+ * 22 threads --> 235.226
+ * 23 threads --> 219.68
+ * 24 threads --> 215.853
+ * 25 threads --> 209.417
+ * 26 threads --> 199.965
+ * 27 threads --> 194.025
+ * 28 threads --> 186.961
+ * 29 threads --> 184.563 s
+ * 30 threads --> 174.373 s
+ * 31 threads --> 171.084 s
+ * 32 threads --> 164.497 s
  */
 int main(int argc, char *argv[]) {
     //Setup environment --> Abilitiamo Cancel for
@@ -60,7 +94,7 @@ int main(int argc, char *argv[]) {
     long number_of_possible_passwords = (long)pow((double)allowed_char_size, (double)password_length);
 
     // SETUP openMP
-    int number_threads = omp_get_max_threads();
+    int number_threads = 31;
 
     cout << "Inizio attacco brute force con: " << number_threads << " threads" << endl;
     double start_time = omp_get_wtime();
@@ -89,7 +123,6 @@ int main(int argc, char *argv[]) {
         #pragma omp cancellation point for
         }
     }
-
 
     return 0;
 }

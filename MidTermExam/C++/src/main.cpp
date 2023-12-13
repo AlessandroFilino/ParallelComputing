@@ -14,12 +14,17 @@
 using namespace std;
 
 /*
- *  Dictiornary Attack
+ *  Brute Force Attack
  *  Supponiamo di conoscere la chiave usata in DES e di voler cercare in un set di password se presente quella indicata
  *  Questo tipo di attacco è molto noto.
  *
+ *  MAC -> 6 performance core + 2 Efficiency
  *  Password: 2/W.caaa
- *  3964,3 s dopo 1273791 50008053
+ *  3964,3 s dopo 50008053
+ *
+ *  LINUX -> 16 core 32 Threads
+ *  4746.73 s
+ *
  */
 int main() {
     //Setup
