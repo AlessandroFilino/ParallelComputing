@@ -18,13 +18,27 @@ using namespace std;
  *  Supponiamo di conoscere la chiave usata in DES e di voler cercare in un set di password se presente quella indicata
  *  Questo tipo di attacco è molto noto.
  *
+ *  8 Password: 2/W.caaa
  *  MAC -> 6 performance core + 2 Efficiency
- *  Password: 2/W.caaa
- *  3964,3 s dopo 50008053
+ *  3964,3 s dopo 50008053 iterazioni
  *
  *  LINUX -> 16 core 32 Threads
  *  4746.73 s
  *
+ *  7 Password: 2/W.ca
+ *  4761.25 s dopo 50008053
+ *
+ * 6 Password: 2/W.ca
+ *  4783.83 s dopo 50008053
+ *
+ *  5 Password: 2/W.c
+ *  4971.21 s dopo 50008053
+ *
+ *  4 Password: 2/W.
+ *  1642.11 s dopo 16453621 iterazioni
+ *
+ *  3 Password: 2/W
+ *  22.8288 s dopo 200693 iterazioni
  */
 int main() {
     //Setup
@@ -32,13 +46,13 @@ int main() {
     bitset<64> des_key(string_to_binary(text_key));
     // bitset<64> des_key(random_key_generator()); //Alternativa se non vogliamo inserire manualmente una chiave
     cout << "Chiave selezionata: " << text_key << " ----> " << des_key << endl;
-    string password = "2/W.caaa";
+    string password = "2/W.ca";
     //stirng password = random_text_generator();
     vector<bitset<48>> sub_keys = create_sub_keys(des_key);
     bitset<64> chiper_password = des_encrypt_text(password, sub_keys);
     cout << "Password: " << password << " cifrata con DES ----> " << chiper_password << endl;
 
-    int password_length = 8;
+    int password_length = 6;
     char password_generate[password_length + 1]; //+1 per il carattere di terminazione \0
     long number_of_possible_passwords = (long)pow((double)allowed_char_size,(double)password_length);
     cout << "Total of possible password: " << number_of_possible_passwords << endl;

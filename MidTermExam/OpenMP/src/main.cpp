@@ -62,6 +62,18 @@ using namespace std;
  * 30 threads --> 174.373 s
  * 31 threads --> 171.084 s
  * 32 threads --> 164.497 s
+ *
+ *
+ * Password: 2/W
+ * 4 threads --> 5.04367
+ * 8 threads --> 2.84091
+ * 12 threads --> 2.06063
+ * 16 threads --> 1.56483
+ * 20 threads --> 1.05157
+ * 24 threads --> 1.04997
+ * 28 threads --> 0.902019
+ * 32 threads --> 0.796091 s
+ *
  */
 int main(int argc, char *argv[]) {
     //Setup environment --> Abilitiamo Cancel for
@@ -84,17 +96,17 @@ int main(int argc, char *argv[]) {
     string text_key("A4rT9v.w");
     bitset<64> des_key(string_to_binary(text_key));
     cout << "Chiave selezionata: " << text_key << " ----> " << des_key << endl;
-    string password = "2/W.caaa";
+    string password = "2/W.";
     vector<bitset<48>> sub_keys = create_sub_keys(des_key);
     bitset<64> chiper_password = des_encrypt_text(password, sub_keys);
     cout << "Password: " << password << " cifrata con DES ----> " << chiper_password << endl;
 
-    int password_length = 8;
+    int password_length = 4;
 
     long number_of_possible_passwords = (long)pow((double)allowed_char_size, (double)password_length);
 
     // SETUP openMP
-    int number_threads = 31;
+    int number_threads = 32;
 
     cout << "Inizio attacco brute force con: " << number_threads << " threads" << endl;
     double start_time = omp_get_wtime();
