@@ -63,6 +63,10 @@ using namespace std;
  * 31 threads --> 171.084 s
  * 32 threads --> 164.497 s
  *
+ * Supponiamo di conoscere il numero totale di iterazioni necessarie per trovare quella password (50008053).
+ * Proviamo quindi ad accorciare il ciclo for e a lasciare ad openMP la gestione degli indici
+ *
+ * 32 Threads --> 158.565
  *
  * Password: 2/W
  * 4 threads --> 5.04367
@@ -73,6 +77,7 @@ using namespace std;
  * 24 threads --> 1.04997
  * 28 threads --> 0.902019
  * 32 threads --> 0.796091 s
+ *
  *
  */
 int main(int argc, char *argv[]) {
@@ -96,12 +101,12 @@ int main(int argc, char *argv[]) {
     string text_key("A4rT9v.w");
     bitset<64> des_key(string_to_binary(text_key));
     cout << "Chiave selezionata: " << text_key << " ----> " << des_key << endl;
-    string password = "2/W.";
+    string password = "2/W.caaa";
     vector<bitset<48>> sub_keys = create_sub_keys(des_key);
     bitset<64> chiper_password = des_encrypt_text(password, sub_keys);
     cout << "Password: " << password << " cifrata con DES ----> " << chiper_password << endl;
 
-    int password_length = 4;
+    int password_length = 8;
 
     long number_of_possible_passwords = (long)pow((double)allowed_char_size, (double)password_length);
 
@@ -118,8 +123,9 @@ int main(int argc, char *argv[]) {
          * In questo modo facciamo dei chunk statici degli indici.
          * Ad esempio se number_of_possible_passwords fosse = 100 e stessi utilizzando 5 threads, ogni threads avrebbe 100/5 iterazioni da gestire
          */
-        #pragma omp for schedule(static, number_threads)
-        for (long i = 0; i < number_of_possible_passwords; i++) {
+        //#pragma omp for schedule(static, number_threads)
+        #pragma omp for schedule(static)
+        for (long i = 0; i < 50108043; i++) { //numebr_of_possibile_passowrds
             generate_all_possible_password(password_generate, password_length, i);
             password_generate[password_length] = '\0';
             bitset<64> chiper_password_generate = des_encrypt_text(password_generate, sub_keys);
@@ -131,6 +137,13 @@ int main(int argc, char *argv[]) {
                 cout << "Tempo richiesto: " << total_time << endl;
                 cout << "Attacco brute force terminato" << " s" << endl;
                 #pragma omp cancel for
+            }
+            else {
+                #pragma omp critical
+                {
+                    int thread_id = omp_get_thread_num();
+                    cout << "Thread: [" << thread_id << "] processa Password: " << password_generate << endl;
+                }
             }
         #pragma omp cancellation point for
         }

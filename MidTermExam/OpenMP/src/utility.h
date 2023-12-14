@@ -31,7 +31,7 @@ std::bitset<T> xor_function(const std::bitset<T>& a, const std::bitset<T>& b);
 template <size_t T>
 std::vector<std::bitset<T/2>> splitting_bitset(const std::bitset<T>& bin_text);
 std::bitset<64> random_key_generator();
-std::string random_text_generator();
+std::string random_text_generator(int text_length);
 std::bitset<64> string_to_binary(const std::string& string_text);
 std::string binary_to_string(const std::bitset<64> binary_text);
 
