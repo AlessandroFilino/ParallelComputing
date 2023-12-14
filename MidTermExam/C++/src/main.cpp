@@ -46,13 +46,15 @@ int main() {
     bitset<64> des_key(string_to_binary(text_key));
     // bitset<64> des_key(random_key_generator()); //Alternativa se non vogliamo inserire manualmente una chiave
     cout << "Chiave selezionata: " << text_key << " ----> " << des_key << endl;
+
+    int password_length = 3;
     string password = "2/W.ca";
-    //stirng password = random_text_generator();
+    //string password = random_text_generator(password_length);
     vector<bitset<48>> sub_keys = create_sub_keys(des_key);
     bitset<64> chiper_password = des_encrypt_text(password, sub_keys);
     cout << "Password: " << password << " cifrata con DES ----> " << chiper_password << endl;
 
-    int password_length = 6;
+
     char password_generate[password_length + 1]; //+1 per il carattere di terminazione \0
     long number_of_possible_passwords = (long)pow((double)allowed_char_size,(double)password_length);
     cout << "Total of possible password: " << number_of_possible_passwords << endl;
@@ -66,7 +68,7 @@ int main() {
         generate_all_possible_password(password_generate, password_length, i);
         password_generate[password_length] = '\0';
         bitset<64> chiper_password_generate = des_encrypt_text(password_generate, sub_keys);
-        cout << "Test [" << i << "] con la password: " << chiper_password_generate << " " << password_generate<<  endl;
+        //cout << "Test [" << i << "] con la password: " << chiper_password_generate << " " << password_generate<<  endl;
 
         if (chiper_password == chiper_password_generate){
             cout << "Password trovata!" << endl;

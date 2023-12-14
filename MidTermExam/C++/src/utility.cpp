@@ -126,12 +126,12 @@ bitset<64> random_key_generator(){
 /*
  * Generatore di testo composto da 8 caratteri scelti tra quelli disponibili (definiti nell'array allowed_char)
  */
-string random_text_generator(){
+string random_text_generator(int text_length){
     string random_text;
 
     srand(static_cast<unsigned int>(time(0))); //Resettimo il generatore di numeri casuali. Se commentassimo questa riga, otterremo sempre la stessa password
 
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < text_length; ++i) {
         int randomPosition = rand() % (strlen(allowed_char) - 1);
         random_text += allowed_char[randomPosition];
     }
