@@ -29,6 +29,20 @@ using namespace std;
  * 7 threads --> 618.588 s
  * 8 threads --> 595.119 s
  *
+ * Supponiamo di conoscere il numero totale di iterazioni necessarie per trovare quella password (50008053).
+ * Proviamo quindi ad accorciare il ciclo for e a lasciare ad openMP la gestione degli indici.
+ * Il risultato ci mostra rispetto al caso sequenziale si riesca comunque a  migliorare la prestazione ma non sia ottimizzato come l'assegnazione statica fatta in precedenza
+ *
+ * 1 threads --> 3888.58 s
+ * 2 threads --> 4030.15 s
+ * 3 threads --> 4073.9 s
+ * 4 threads --> 4092.4 s
+ * 5 threads --> 4183.47 s
+ * 6 threads --> 4673.27 s
+ * 7 threads --> 5979.54 s
+ * 8 threads --> 9127.22 s
+ *
+ *
  * LINUX Intel(R) Xeon (R) Silver 4314 CPU @ 2.40GHz (16 core 32 threads)
  * 1 threads --> 4461.75 s
  * 2 threads --> 2236.64 s
@@ -51,33 +65,17 @@ using namespace std;
  * 19 threads --> 268.801 s
  * 20 threads --> 250.751 s
  * 21 threads --> 236.494 s
- * 22 threads --> 235.226
- * 23 threads --> 219.68
- * 24 threads --> 215.853
- * 25 threads --> 209.417
- * 26 threads --> 199.965
- * 27 threads --> 194.025
- * 28 threads --> 186.961
+ * 22 threads --> 235.226 s
+ * 23 threads --> 219.68 s
+ * 24 threads --> 215.853 s
+ * 25 threads --> 209.417 s
+ * 26 threads --> 199.965 s
+ * 27 threads --> 194.025 s
+ * 28 threads --> 186.961 s
  * 29 threads --> 184.563 s
  * 30 threads --> 174.373 s
  * 31 threads --> 171.084 s
  * 32 threads --> 164.497 s
- *
- * Supponiamo di conoscere il numero totale di iterazioni necessarie per trovare quella password (50008053).
- * Proviamo quindi ad accorciare il ciclo for e a lasciare ad openMP la gestione degli indici
- *
- * 32 Threads --> 158.565
- *
- * Password: 2/W
- * 4 threads --> 5.04367
- * 8 threads --> 2.84091
- * 12 threads --> 2.06063
- * 16 threads --> 1.56483
- * 20 threads --> 1.05157
- * 24 threads --> 1.04997
- * 28 threads --> 0.902019
- * 32 threads --> 0.796091 s
- *
  *
  */
 int main(int argc, char *argv[]) {
@@ -111,7 +109,7 @@ int main(int argc, char *argv[]) {
     long number_of_possible_passwords = (long)pow((double)allowed_char_size, (double)password_length);
 
     // SETUP openMP
-    int number_threads = 32;
+    int number_threads = 8;
 
     cout << "Inizio attacco brute force con: " << number_threads << " threads" << endl;
     double start_time = omp_get_wtime();
@@ -123,9 +121,8 @@ int main(int argc, char *argv[]) {
          * In questo modo facciamo dei chunk statici degli indici.
          * Ad esempio se number_of_possible_passwords fosse = 100 e stessi utilizzando 5 threads, ogni threads avrebbe 100/5 iterazioni da gestire
          */
-        //#pragma omp for schedule(static, number_threads)
-        #pragma omp for schedule(static)
-        for (long i = 0; i < 50108043; i++) { //numebr_of_possibile_passowrds
+        #pragma omp for schedule(static, number_threads)
+        for (long i = 0; i < number_of_possible_passwords; i++) {
             generate_all_possible_password(password_generate, password_length, i);
             password_generate[password_length] = '\0';
             bitset<64> chiper_password_generate = des_encrypt_text(password_generate, sub_keys);
@@ -134,16 +131,9 @@ int main(int argc, char *argv[]) {
                 double end_time = omp_get_wtime();
                 double total_time = end_time - start_time;
                 cout << "Password trovata!" << endl;
-                cout << "Tempo richiesto: " << total_time << endl;
-                cout << "Attacco brute force terminato" << " s" << endl;
+                cout << "Tempo richiesto: " << total_time << " s" << endl;
+                cout << "Attacco brute force terminato" << endl;
                 #pragma omp cancel for
-            }
-            else {
-                #pragma omp critical
-                {
-                    int thread_id = omp_get_thread_num();
-                    cout << "Thread: [" << thread_id << "] processa Password: " << password_generate << endl;
-                }
             }
         #pragma omp cancellation point for
         }

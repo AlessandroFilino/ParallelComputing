@@ -3,9 +3,10 @@ project(MidTermExam)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#FOR LINUX
+#[===[FOR LINUX
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-#[===[ FOR APPLE
+]===]
+#FOR APPLE
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -lomp")
 if(APPLE)
@@ -17,7 +18,6 @@ if(APPLE)
         link_directories(/usr/local/opt/libomp/lib)
     endif()
 endif(APPLE)
-]===]
 
 include_directories(src)
 

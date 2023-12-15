@@ -11,6 +11,7 @@
 #include "desKeyGenerator.h"
 #include "utility.h"
 
+using namespace std;
 
 /*
  *  Valutiamo quanto tempo è necessario per cifrare n password con l'algoritmo sequenziale

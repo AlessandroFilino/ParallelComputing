@@ -11,13 +11,13 @@
 #include "desKeyGenerator.h"
 #include "utility.h"
 
+using namespace std;
+
 /*
  *  Valutiamo quanto tempo è necessario per cifrare n password con l'algoritmo sequenziale
  *  In questo caso non è necessario l'utilizzo della google test lib
  *  773.759 s
  */
-
-using namespace std;
 
 TEST(des, test_time_to_encrypt_one_milion_password) {
     bitset<64> des_key(random_key_generator()); //Alternativa se non vogliamo inserire manualmente una chiave
