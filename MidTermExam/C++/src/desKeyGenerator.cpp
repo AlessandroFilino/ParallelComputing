@@ -66,8 +66,6 @@ vector<bitset<48>> create_sub_keys(bitset<64> key){
     bitset<56> resized_key = make_permutation<64,56>(key, parity_drop_table);
 
     //Split Right and Left della chiave
-    //bitset<28> left(resized_key.to_ulong() >> 28);
-    //bitset<28> right(resized_key.to_ulong() & ((1ull << 28) - 1));
     bitset<28> left(splitting_bitset(resized_key)[0]);
     bitset<28> right(splitting_bitset(resized_key)[1]);
 

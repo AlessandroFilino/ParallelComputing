@@ -122,7 +122,6 @@ const int final_permutation_table[64] = {
  * Cifriamo il testo in chiaro utilizzando i passi dell'algoritmo DES
  * plain_text --> Supponiamo che il testo sia passato già cifrato in binario
  */
-
 bitset<64> des_encrypt_text(string plain_text, vector<bitset<48>> sub_keys){
     bitset<64> cipher_text;
 
@@ -135,7 +134,7 @@ bitset<64> des_encrypt_text(string plain_text, vector<bitset<48>> sub_keys){
     bitset<32> left_block = (splitting_bitset(bin_plain_text)[0]);
     bitset<32> right_block = (splitting_bitset(bin_plain_text)[1]);
 
-    for (int round = 0; round < 16; round++) { //16
+    for (int round = 0; round < 16; round++) {
         //Applichiamo la permutazione con la tabella di espansione (D-Box)
         bitset<48> right_expanded = make_permutation<32,48>(right_block, expansion_permutation_table);
 

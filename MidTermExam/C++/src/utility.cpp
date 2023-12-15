@@ -30,7 +30,6 @@ template bitset<28> shift_left(bitset<28> bit_text, unsigned int number_of_shift
  *  bin_text --> Input binario su cui vogliamo eseguire una permutazione
  *  permutation_table --> Array di interi che seguirà il metodo per effettuare la permutazione
  */
-
 template <size_t N, size_t T>
 bitset<T> make_permutation(const bitset<N>& bin_text, const int* permutation_table){
     bitset<T> new_bin_text;
@@ -58,6 +57,7 @@ bitset<T> xor_function(const bitset<T>& a, const bitset<T>& b){
 template bitset<64> xor_function(const bitset<64>& a, const bitset<64>& b);
 template bitset<48> xor_function(const bitset<48>& a, const bitset<48>& b);
 template bitset<32> xor_function(const bitset<32>& a, const bitset<32>& b);
+
 /*
  * splitting_bitset
  * Questo template prende una stringa bitset e restuisce due sottoparti
