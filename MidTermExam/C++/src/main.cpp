@@ -67,10 +67,10 @@ int main() {
     for (int i = 0; i < number_of_possible_passwords; i++) {
         generate_all_possible_password(password_generate, password_length, i);
         password_generate[password_length] = '\0';
-        bitset<64> chiper_password_generate = des_encrypt_text(password_generate, sub_keys);
-        //cout << "Test [" << i << "] con la password: " << chiper_password_generate << " " << password_generate<<  endl;
+        bitset<64> cipher_password_generate = des_encrypt_text(password_generate, sub_keys);
+        //cout << "Test [" << i << "] con la password: " << cipher_password_generate << " " << password_generate<<  endl;
 
-        if (chiper_password == chiper_password_generate){
+        if (chiper_password == cipher_password_generate){
             cout << "Password trovata!" << endl;
             gettimeofday(&end_time, NULL);
             double total_time = ((end_time.tv_sec  - start_time.tv_sec) * 1000000u + start_time.tv_usec - end_time.tv_usec) / 1.e6;

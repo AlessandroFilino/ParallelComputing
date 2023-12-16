@@ -29,20 +29,20 @@ TEST(des, test_time_to_encrypt_one_milion_password) {
     // cout << "Total of possible password: " << number_of_possible_passwords << endl;
 
     //SETUP openMP
-    int number_threads = omp_get_max_threads();
+    int number_threads = 8;
     cout << "Inizio cifratura di "<< number_of_possible_passwords << " password ..." << endl;
     double start_time = omp_get_wtime();
 
-    #pragma omp parallel default(none) shared(sub_keys, password_length, number_of_possible_passwords, password_generate) num_threads(number_threads)
+    #pragma omp parallel default(none) shared(sub_keys, password_length, number_of_possible_passwords, password_generate, number_threads) num_threads(number_threads)
     {
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(static, number_threads)
         for (long i = 0; i < number_of_possible_passwords; i++) {
             int thread_id = omp_get_thread_num();
             long my_unique_i = i + thread_id * number_of_possible_passwords;
 
             generate_all_possible_password(password_generate, password_length, my_unique_i);
             password_generate[password_length] = '\0';
-            bitset<64> chiper_password_generate = des_encrypt_text(password_generate, sub_keys);
+            bitset<64> cipher_password_generate = des_encrypt_text(password_generate, sub_keys);
         }
     }
 

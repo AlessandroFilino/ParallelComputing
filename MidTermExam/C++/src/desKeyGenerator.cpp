@@ -81,8 +81,8 @@ vector<bitset<48>> create_sub_keys(bitset<64> key){
         bitset<48> roundKey = make_permutation<56,48>(combined_key, key_compression_table);
 
         sub_keys.push_back(roundKey);
-
     }
+
     return sub_keys;
 }
 

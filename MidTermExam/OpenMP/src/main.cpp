@@ -101,8 +101,8 @@ int main(int argc, char *argv[]) {
     cout << "Chiave selezionata: " << text_key << " ----> " << des_key << endl;
     string password = "2/W.caaa";
     vector<bitset<48>> sub_keys = create_sub_keys(des_key);
-    bitset<64> chiper_password = des_encrypt_text(password, sub_keys);
-    cout << "Password: " << password << " cifrata con DES ----> " << chiper_password << endl;
+    bitset<64> cipher_password = des_encrypt_text(password, sub_keys);
+    cout << "Password: " << password << " cifrata con DES ----> " << cipher_password << endl;
 
     int password_length = 8;
 
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
     cout << "Inizio attacco brute force con: " << number_threads << " threads" << endl;
     double start_time = omp_get_wtime();
 
-    #pragma omp parallel default(none) shared(chiper_password, sub_keys, start_time, password_length, number_of_possible_passwords, number_threads, cout) num_threads(number_threads)
+    #pragma omp parallel default(none) shared(cipher_password, sub_keys, start_time, password_length, number_of_possible_passwords, number_threads, cout) num_threads(number_threads)
     {
         char password_generate[password_length + 1];
         /*
@@ -125,9 +125,9 @@ int main(int argc, char *argv[]) {
         for (long i = 0; i < number_of_possible_passwords; i++) {
             generate_all_possible_password(password_generate, password_length, i);
             password_generate[password_length] = '\0';
-            bitset<64> chiper_password_generate = des_encrypt_text(password_generate, sub_keys);
+            bitset<64> cipher_password_generate = des_encrypt_text(password_generate, sub_keys);
 
-            if (chiper_password == chiper_password_generate) {
+            if (cipher_password == cipher_password_generate) {
                 double end_time = omp_get_wtime();
                 double total_time = end_time - start_time;
                 cout << "Password trovata!" << endl;
@@ -135,7 +135,7 @@ int main(int argc, char *argv[]) {
                 cout << "Attacco brute force terminato" << endl;
                 #pragma omp cancel for
             }
-        #pragma omp cancellation point for
+            #pragma omp cancellation point for
         }
     }
 
