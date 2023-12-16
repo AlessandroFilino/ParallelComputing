@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
     long number_of_possible_passwords = (long)pow((double)allowed_char_size, (double)password_length);
 
     // SETUP openMP
-    int number_threads = 8;
+    int number_threads = 16;
 
     cout << "Inizio attacco brute force con: " << number_threads << " threads" << endl;
     double start_time = omp_get_wtime();
