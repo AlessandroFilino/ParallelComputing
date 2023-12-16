@@ -2,7 +2,7 @@
 
 - **Anno Accademico**: 2023-2024
 - **Mid Term Project**: DES Password Decryption
-- **Final Term Project**: //
+- **Final Term Project**: Bigrams / Trigrams Calculator
 - **Student**: Alessandro Filino - 7125518
 - **CFU**: 9
 
