@@ -11,7 +11,7 @@ def download_gutenberg_book(book_id):
 
     book_url = f'{base_url}{book_id}{book_format}'
 
-    print(f"Download {book_url} ...")
+    print(f"Download from {book_url} ...")
 
     try:
         response = requests.get(book_url)
