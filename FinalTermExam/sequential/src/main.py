@@ -5,30 +5,36 @@ from utility import download_gutenberg_book, make_histogram, log_to_file, setup_
 
 setup_system("./resources/")
 
-book_number = 600
+book_number = 50
 
 start_time = time.time()
 for i in range(0, book_number):
-    print("ANALISI LIBRO:", i)
-    download_gutenberg_book(i)
+    print("EXECUT BOOK:", i)
+    try:
+        download_gutenberg_book(i)
 
-    with open(f"./resources/book_{i}.txt", 'r', encoding='utf-8') as file:
-        testo = file.read()
+        with open(f"./resources/book_{i}.txt", 'r', encoding='utf-8') as file:
+            testo = file.read()
 
-    testo = testo.lower()
-    testo = testo.replace('.', '')  # Rimuovi il punto alla fine della frase
+        testo = testo.lower()
+        testo = testo.replace('.', '')  # Rimuovi il punto alla fine della frase
 
-    # Generazione di bigrammi e trigrammi
-    bigrammi = list(bigrams(testo.split()))
-    trigrammi = list(trigrams(testo.split()))
+        # Generazione di bigrammi e trigrammi
+        bigrammi = list(bigrams(testo.split()))
+        trigrammi = list(trigrams(testo.split()))
 
-    #make_histogram(bigrammi, trigrammi)
-    log_to_file(i, bigrammi, trigrammi)
+        #make_histogram(bigrammi, trigrammi)
+        log_to_file(i, bigrammi, trigrammi)
+    except Exception as e:
+        print(f'ERROR: Download book_{i}: {e}')
+    
+    print("\n")
+
 end_time = time.time()
 
 execution_time = end_time - start_time
 
-print(f"Completato in: {total_execution_time} secondi")
+print(f"Complete in: {round(execution_time, 3)} s")
 
 
 
