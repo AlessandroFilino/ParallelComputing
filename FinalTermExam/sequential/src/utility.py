@@ -3,6 +3,7 @@ import nltk
 from nltk.probability import FreqDist
 import shutil, os
 import requests
+import json
 
 
 def download_gutenberg_book(book_id):
@@ -31,29 +32,46 @@ def download_gutenberg_book(book_id):
     except Exception as e:
         print(f'ERROR: {e}')
 
-def log_to_file(book_number, bigrammi, trigrammi):
-    with open(f"./resources/analysis/analysis_book_{book_number}.txt", 'w', encoding='utf-8') as file:
-        file.write(f"ANALYSIS FOR  book_{book_number}:\n\n")
+def log_to_file(book_number, bigrams, trigrams):
+    data = {
+        "book_number": book_number,
+        "bigrams": sorted([(bigram, count) for bigram, count in nltk.FreqDist(bigrams).items()], key=lambda x: x[1], reverse=True),
+        "trigrams": sorted([(trigram, count) for trigram, count in nltk.FreqDist(trigrams).items()], key=lambda x: x[1], reverse=True),
+    }
 
-        file.write("Bigrammi:\n")
-        for bigramma, count in sorted(nltk.FreqDist(bigrammi).items(), key=lambda x: x[1], reverse=True):
-            file.write(f"{bigramma} - #{count}\n")
+    with open(f"./resources/analysis/analysis_book_{book_number}.json", 'w', encoding='utf-8') as json_file:
+        json.dump(data, json_file, indent=4)
 
-        file.write("\nTrigrammi:\n")
-        for trigramma, count in sorted(nltk.FreqDist(trigrammi).items(), key=lambda x: x[1], reverse=True):
-            file.write(f"{trigramma} - #{count}\n")
+    print(f"COMPLETE! Results available in: resources/analysis/analysis_book_{book_number}.json")
 
-    print(f"COMPLETE! Results available in: resources/analysis/analysis_book_{book_number}.txt")
 
-def make_histogram(bigrammi, trigrammi):
-    fdist_bigrammi = FreqDist(bigrammi)
-    fdist_trigrammi = FreqDist(trigrammi)
+def make_histogram(book_number):
+    with open(f"./resources/analysis/analysis_book_{book_number}.json", 'r', encoding='utf-8') as json_file:
+        json_data = json.load(json_file)
+        bigrams_data = json_data['bigrams']
+        trigrams_data = json_data['trigrams']
 
-    fdist_bigrammi.plot(30, cumulative=False)
+    bigram_frequencies = [(tuple(bigram), count) for bigram, count in bigrams_data]
+    trigram_frequencies = [(tuple(trigram), count) for trigram, count in trigrams_data]
+
+    plot_histogram(bigram_frequencies, 'Bigram Frequency Histogram', 'Bigram', 'Frequency')
+    plot_histogram(trigram_frequencies, 'Trigram Frequency Histogram', 'Trigram', 'Frequency')
+    
+def plot_histogram(data, title, xlabel, ylabel):
+    labels, values = zip(*data)
+    indexes = range(len(labels))
+
+    plt.bar(indexes, values, align='center')
+    plt.xticks(indexes, labels, rotation='vertical')
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
     plt.show()
 
-    fdist_trigrammi.plot(30, cumulative=False)
-    plt.show()
+def preprocess_text(text):
+    text = text.lower()
+    text = text.replace('.', '')
+    return text
 
 def setup_system(directory):
     if os.path.exists(directory):
@@ -61,7 +79,7 @@ def setup_system(directory):
             shutil.rmtree(directory)
             os.mkdir(directory)
             os.mkdir(os.path.join(directory, "analysis"))
-            print(f"Setup completato")
+            print(f"Setup complete")
         except Exception as e:
             print(f"Setup Error: {e}")
     else:
@@ -72,7 +90,7 @@ def setup_system(directory):
 def clean_directory(directory):
     try:
         shutil.rmtree(directory)
-        print(f"Contenuto della directory '{directory}' rimosso con successo.")
+        print(f"Cleaning complete for directory: '{directory}'.")
     except Exception as e:
-        print(f"Errore durante la rimozione del contenuto della directory '{directory}': {e}")
+        print(f"ERROR: {e}")
 
