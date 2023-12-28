@@ -45,7 +45,7 @@ def log_to_file(book_number, bigrams, trigrams):
     print(f"COMPLETE! Results available in: resources/analysis/analysis_book_{book_number}.json")
 
 
-def make_histogram(book_number):
+def make_histogram(book_number, plot_all=False):
     with open(f"./resources/analysis/analysis_book_{book_number}.json", 'r', encoding='utf-8') as json_file:
         json_data = json.load(json_file)
         bigrams_data = json_data['bigrams']
@@ -54,15 +54,20 @@ def make_histogram(book_number):
     bigram_frequencies = [(tuple(bigram), count) for bigram, count in bigrams_data]
     trigram_frequencies = [(tuple(trigram), count) for trigram, count in trigrams_data]
 
-    plot_histogram(bigram_frequencies, 'Bigram Frequency Histogram', 'Bigram', 'Frequency')
-    plot_histogram(trigram_frequencies, 'Trigram Frequency Histogram', 'Trigram', 'Frequency')
+    if plot_all is False:
+        number_of_plots = 50
+        plot_histogram(bigram_frequencies[:number_of_plots], 'Bigram Frequency Histogram', 'Bigram', 'Frequency')
+        plot_histogram(trigram_frequencies[:number_of_plots], 'Trigram Frequency Histogram', 'Trigram', 'Frequency')
+    else:
+        plot_histogram(bigram_frequencies, 'Bigram Frequency Histogram', 'Bigram', 'Frequency')
+        plot_histogram(trigram_frequencies, 'Trigram Frequency Histogram', 'Trigram', 'Frequency')
     
 def plot_histogram(data, title, xlabel, ylabel):
     labels, values = zip(*data)
     indexes = range(len(labels))
 
     plt.bar(indexes, values, align='center')
-    plt.xticks(indexes, labels, rotation='vertical')
+    plt.xticks(indexes, labels, rotation='vertical', fontsize=5)
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)

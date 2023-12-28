@@ -5,7 +5,7 @@ from utility import download_gutenberg_book, make_histogram, log_to_file, setup_
 
 setup_system("./resources/")
 
-books = 2
+books = 4
 
 start_time = time.time()
 for book in range(0, books):
@@ -23,7 +23,7 @@ for book in range(0, books):
 
         log_to_file(book, bigrams, trigrams)
 
-        make_histogram(book)
+        #make_histogram(book)
     except Exception as e:
         print(f'ERROR: Download book_{book}: {e}')
 
