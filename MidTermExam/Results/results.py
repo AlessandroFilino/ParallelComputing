@@ -72,6 +72,6 @@ def parallelo_vs_parallelo_modificato():
     plt.show()
 
 
-sequenziale_parallelo_8 ()
-#speed_up_sequenziale_parallelo_8()
+#sequenziale_parallelo_8 ()
+speed_up_sequenziale_parallelo_8()
 #parallelo_vs_parallelo_modificato()
