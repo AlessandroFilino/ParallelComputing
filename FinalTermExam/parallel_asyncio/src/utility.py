@@ -2,11 +2,11 @@ import matplotlib.pyplot as plt
 import nltk
 from nltk.probability import FreqDist
 import shutil, os
-import requests
+import aiohttp
 import json
 
 
-def download_gutenberg_book(working_directory, book_id):
+async def download_gutenberg_book(working_directory, session, book_id):
     base_url = 'https://www.gutenberg.org/ebooks/'
     book_format = ".txt.utf-8"
 
@@ -15,21 +15,17 @@ def download_gutenberg_book(working_directory, book_id):
     print(f"Download from {book_url} ...")
 
     try:
-        response = requests.get(book_url)
-        response.raise_for_status()
-        
-        new_ebook = response.text
+        async with session.get(book_url) as response:
+            response.raise_for_status()
+            new_ebook = await response.text()
 
-        with open(f"{working_directory}/resources/book_{book_id}.txt", 'w', encoding='utf-8') as file:
-            file.write(new_ebook)
+            with open(f"{working_directory}/resources/book_{book_id}.txt", 'w', encoding='utf-8') as file:
+                file.write(new_ebook)
 
-        print(f'Download complete in "{base_url}{book_id}".')
+            print(f'Download complete in "{base_url}{book_id}".')
 
-    except requests.exceptions.RequestException as e:
+    except aiohttp.ClientError as e:
         print(f'HTTP error: {e}')
-
-    except Exception as e:
-        print(f'ERROR: {e}')
 
 def log_to_file(working_directory, book_number, bigrams, trigrams):
     data = {

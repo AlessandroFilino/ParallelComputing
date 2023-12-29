@@ -17,7 +17,6 @@ def download_gutenberg_book(working_directory, book_id):
     try:
         response = requests.get(book_url)
         response.raise_for_status()
-        
         new_ebook = response.text
 
         with open(f"{working_directory}/resources/book_{book_id}.txt", 'w', encoding='utf-8') as file:

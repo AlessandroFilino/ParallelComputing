@@ -1,0 +1,5 @@
+resources/analysis/*
+resources/*
+!resources/analysis
+__pycache__
+src/test.py
