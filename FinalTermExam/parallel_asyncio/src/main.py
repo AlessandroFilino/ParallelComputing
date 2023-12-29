@@ -26,7 +26,7 @@ async def main():
     
     setup_system(f"{working_directory}/resources/")
 
-    books = 50
+    books = 100
     start_time = time.time()
 
     async with aiohttp.ClientSession() as session:
@@ -36,7 +36,7 @@ async def main():
         ]
         await asyncio.gather(*download_and_process_tasks)
 
-    with ProcessPoolExecutor(max_workers=8) as executor:
+    with ProcessPoolExecutor(max_workers=32) as executor:
         executor.map(process_book, range(books))
 
     end_time = time.time()
@@ -50,6 +50,8 @@ if __name__ == "__main__":
 #10 libri: 2.492 s  
 #50 libri: 14.049 s  
 # 100 libri: 
+    #32 workers: 92.674 s
+    #16 workers: 22.663 s
     #8 workers: 19.956 s
     #7 workers: 20.351
     #6 workers: 21.166 s

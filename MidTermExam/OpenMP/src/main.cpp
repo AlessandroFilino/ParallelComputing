@@ -28,11 +28,9 @@ using namespace std;
  * 6 threads --> 644.883 s
  * 7 threads --> 618.588 s
  * 8 threads --> 595.119 s
+ * 16 threads --> 612.199 s
  *
- * Supponiamo di conoscere il numero totale di iterazioni necessarie per trovare quella password (50008053).
- * Proviamo quindi ad accorciare il ciclo for e a lasciare ad openMP la gestione degli indici.
- * Il risultato ci mostra rispetto al caso sequenziale si riesca comunque a  migliorare la prestazione ma non sia ottimizzato come l'assegnazione statica fatta in precedenza
- *
+ * Parallelo V1
  * 1 threads --> 3888.58 s
  * 2 threads --> 4030.15 s
  * 3 threads --> 4073.9 s
@@ -41,41 +39,6 @@ using namespace std;
  * 6 threads --> 4673.27 s
  * 7 threads --> 5979.54 s
  * 8 threads --> 9127.22 s
- *
- *
- * LINUX Intel(R) Xeon (R) Silver 4314 CPU @ 2.40GHz (16 core 32 threads)
- * 1 threads --> 4461.75 s
- * 2 threads --> 2236.64 s
- * 3 threads --> 1493.41 s
- * 4 threads --> 1124.49 s
- * 5 threads --> 901.942 s
- * 6 threads --> 756.772 s
- * 7 threads --> 649.167 s
- * 8 threads --> 594.315 s
- * 9 threads --> 521.07 s
- * 10 threads --> 469.617 s
- * 11 threads --> 434.817 s
- * 12 threads --> 398.885 s
- * 13 threads --> 373.993 s
- * 14 threads --> 349.434 s
- * 15 threads --> 327.47 s
- * 16 threads --> 309.461 s
- * 17 threads --> 286.749 s
- * 18 threads --> 279.44 s
- * 19 threads --> 268.801 s
- * 20 threads --> 250.751 s
- * 21 threads --> 236.494 s
- * 22 threads --> 235.226 s
- * 23 threads --> 219.68 s
- * 24 threads --> 215.853 s
- * 25 threads --> 209.417 s
- * 26 threads --> 199.965 s
- * 27 threads --> 194.025 s
- * 28 threads --> 186.961 s
- * 29 threads --> 184.563 s
- * 30 threads --> 174.373 s
- * 31 threads --> 171.084 s
- * 32 threads --> 164.497 s
  *
  */
 int main(int argc, char *argv[]) {
