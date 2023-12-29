@@ -21,5 +21,5 @@ Assumere:
 Problema di bigrammi e trigrammi.
 Importare dei documenti (pdf o epub) e contare il numero di occorrenze di bigrammi (ossia due parole consecutive) e trigrammi (tre parole consecutive).
 Assumere:
-- Considerare bigrammi o trigrammi di caratteri o parole
+- Considerare bigrammi o trigrammi di parole
 Produciamo quindi un istogramma che riporti i risultati trovati
