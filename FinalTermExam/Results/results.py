@@ -26,7 +26,7 @@ def sequenziale_parallelo():
     plt.legend()
     plt.show()
 
-def sequenziale_parallelo_extra():
+def sequenziale_parallelo_completo():
     #MAC
     num_book = [10, 50, 100, 500, 1000]
     tempo_esecuzione_sequenziale = [10.29, 88.963, 181.758, 891.633, 1795.717]
@@ -60,11 +60,11 @@ def speed_up_sequenziale_asyncio():
     #MAC
     num_threads = [1, 2, 3, 4, 5, 6, 7, 8, 16, 32]
     tempo_esecuzione_sequenziale = [181.758]
-    tempo_esecuzione_parallelo_multiprocessing=[187.664, 92.992, 66.851, 47.598, 38.908, 35.622, 29.677, 25.581, 16.372, 18.547]
+    tempo_esecuzione_parallelo_asyncio = [51.331, 33.196, 27.009, 26.752, 23.222, 21.166, 20.351, 19.956, 22.663, 92.674]
 
 
     speed_up = []
-    for parallelo in tempo_esecuzione_parallelo_multiprocessing:
+    for parallelo in tempo_esecuzione_parallelo_asyncio:
         risultato = tempo_esecuzione_sequenziale[0] / parallelo
         speed_up.append(risultato)
 
@@ -84,10 +84,10 @@ def speed_up_sequenziale_multiprocessing():
     #MAC
     num_threads = [1, 2, 3, 4, 5, 6, 7, 8, 16, 32]
     tempo_esecuzione_sequenziale = [181.758]
-    tempo_esecuzione_parallelo_asyncio = [51.331, 33.196, 27.009, 26.752, 23.222, 21.166, 20.351, 19.956, 22.663, 92.674]
+    tempo_esecuzione_parallelo_multiprocessing=[187.664, 92.992, 66.851, 47.598, 38.908, 35.622, 29.677, 25.581, 16.372, 18.547]
 
     speed_up = []
-    for parallelo in tempo_esecuzione_parallelo_asyncio:
+    for parallelo in tempo_esecuzione_parallelo_multiprocessing:
         risultato = tempo_esecuzione_sequenziale[0] / parallelo
         speed_up.append(risultato)
 
@@ -126,8 +126,8 @@ def speed_up_parallelo():
     plt.show()
 
 
-sequenziale_parallelo()
-#sequenziale_parallelo_extra()
+#sequenziale_parallelo()
+sequenziale_parallelo_completo()
 #speed_up_sequenziale_asyncio()
 #speed_up_sequenziale_multiprocessing()
 #speed_up_parallelo()
