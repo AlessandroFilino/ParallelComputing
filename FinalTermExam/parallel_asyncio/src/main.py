@@ -26,7 +26,7 @@ async def main():
     
     setup_system(f"{working_directory}/resources/")
 
-    books = 100
+    books = 1000
     start_time = time.time()
 
     async with aiohttp.ClientSession() as session:
@@ -50,16 +50,16 @@ if __name__ == "__main__":
 #10 libri: 2.492 s  
 #50 libri: 14.049 s  
 # 100 libri: 
-    #32 workers: 92.674 s
-    #16 workers: 22.663 s
-    #8 workers: 19.956 s
-    #7 workers: 20.351
-    #6 workers: 21.166 s
-    #5 workers: 23.222 s
-    #4 workers: 26.752 s
-    #3 workers: 27.009 s
-    #2 workers: 33.196 s
-    #1 workers: 51.331 s
+    #32 processes: 22.875 s
+    #16 processes: 21.249 s
+    #8 processes: 19.956 s
+    #7 processes: 20.351 s
+    #6 processes: 21.166 s
+    #5 processes: 20.634 s
+    #4 processes: 23.531 s
+    #3 processes: 27.009 s
+    #2 processes: 33.196 s
+    #1 processes: 51.331 s
 #500 libri: 64.102 s
 #1000 libri: 136.378 s
 
