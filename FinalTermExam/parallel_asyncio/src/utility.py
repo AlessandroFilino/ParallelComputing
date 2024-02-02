@@ -3,7 +3,7 @@ import nltk
 import shutil, os
 import aiohttp
 import json
-
+import re
 
 async def download_gutenberg_book(working_directory, session, book_id):
     base_url = 'https://www.gutenberg.org/ebooks/'
@@ -69,7 +69,7 @@ def plot_histogram(data, title, xlabel, ylabel):
 
 def preprocess_text(text):
     text = text.lower()
-    text = text.replace('.', '')
+    text = re.sub(r'[^\w\s]', '', text)
     return text
 
 def setup_system(directory):

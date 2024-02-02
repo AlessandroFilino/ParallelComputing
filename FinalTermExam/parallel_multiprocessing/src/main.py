@@ -26,7 +26,7 @@ def process_book(book):
 def main():
     setup_system(f"{working_directory}/resources/")
 
-    books = 500
+    books = 100
     
     start_time = time.time()
 

@@ -36,7 +36,7 @@ async def main():
         ]
         await asyncio.gather(*download_and_process_tasks)
 
-    with ProcessPoolExecutor(max_workers=32) as executor:
+    with ProcessPoolExecutor(max_workers=8) as executor:
         executor.map(process_book, range(books))
 
     end_time = time.time()

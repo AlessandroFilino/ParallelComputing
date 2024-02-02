@@ -7,7 +7,7 @@ working_directory = os.path.join(os.getcwd(), "sequential")
 
 setup_system(f"{working_directory}/resources/")
 
-books = 10
+books = 2
 
 start_time = time.time()
 for book in range(0, books):
