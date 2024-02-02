@@ -21,7 +21,7 @@ def sequenziale_parallelo():
 
     plt.suptitle('Bigrams And Trigrams In Python', fontsize = 20)
     plt.title('N. Libri: 100')
-    plt.xlabel('Numero di Threads')
+    plt.xlabel('Numero di Processes')
     plt.ylabel('Tempo di Esecuzione (s)')
     plt.legend()
     plt.show()
@@ -48,7 +48,7 @@ def sequenziale_parallelo_completo():
     plt.grid(True, linestyle='--', linewidth=0.5, color='gray', alpha=0.7)
 
     plt.suptitle('Bigrams And Trigrams In Python', fontsize=20)
-    plt.title('N. Threads = 8')
+    plt.title('N. Processes = 8')
     plt.xlabel('Numero di Libri')
     plt.ylabel('Tempo di Esecuzione (s)')
     plt.legend()
@@ -75,7 +75,7 @@ def speed_up_sequenziale_asyncio():
     
     plt.suptitle('Bigrams And Trigrams In Python', fontsize = 20)
     plt.title('N. Libri: 100')
-    plt.xlabel('Numero di processes')
+    plt.xlabel('Numero di Processes')
     plt.ylabel('Speedup')
     plt.legend()
     plt.show()
@@ -120,14 +120,14 @@ def speed_up_parallelo():
     
     plt.suptitle('Bigrams And Trigrams In Python', fontsize = 20)
     plt.title('N. Libri: 100')
-    plt.xlabel('Numero di threads')
+    plt.xlabel('Numero di processes')
     plt.ylabel('Speedup')
     plt.legend()
     plt.show()
 
 
 #sequenziale_parallelo()
-sequenziale_parallelo_completo()
+#sequenziale_parallelo_completo()
 #speed_up_sequenziale_asyncio()
 #speed_up_sequenziale_multiprocessing()
-#speed_up_parallelo()
+speed_up_parallelo()

@@ -3,7 +3,7 @@ import time
 import os
 import asyncio
 import aiohttp
-from concurrent.futures import ProcessPoolExecutor
+from multiprocessing import Pool
 from utility import download_gutenberg_book, log_to_file, setup_system, preprocess_text
 
 working_directory = os.path.join(os.getcwd(), "parallel_asyncio")
@@ -36,8 +36,8 @@ async def main():
         ]
         await asyncio.gather(*download_and_process_tasks)
 
-    with ProcessPoolExecutor(max_workers=8) as executor:
-        executor.map(process_book, range(books))
+    with Pool(processes=8) as pool:
+        pool.map(process_book, range(books))
 
     end_time = time.time()
     execution_time = end_time - start_time
