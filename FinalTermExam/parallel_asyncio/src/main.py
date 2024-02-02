@@ -4,7 +4,7 @@ import os
 import asyncio
 import aiohttp
 from concurrent.futures import ProcessPoolExecutor
-from utility import download_gutenberg_book, make_histogram, log_to_file, setup_system, preprocess_text
+from utility import download_gutenberg_book, log_to_file, setup_system, preprocess_text
 
 working_directory = os.path.join(os.getcwd(), "parallel_asyncio")
 

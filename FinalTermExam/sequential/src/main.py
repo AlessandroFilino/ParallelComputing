@@ -7,7 +7,7 @@ working_directory = os.path.join(os.getcwd(), "sequential")
 
 setup_system(f"{working_directory}/resources/")
 
-books = 50
+books = 10
 
 start_time = time.time()
 for book in range(0, books):
@@ -21,11 +21,12 @@ for book in range(0, books):
         text = preprocess_text(text)
 
         bigrams = list(nltk_bigrams(text.split()))
+        #print(bigrams)
         trigrams = list(nltk_trigrams(text.split()))
 
         log_to_file(working_directory, book, bigrams, trigrams)
 
-        #make_histogram(book)
+        #make_histogram(working_directory, book)
     except Exception as e:
         print(f'ERROR: {e}')
 
