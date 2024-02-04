@@ -11,7 +11,7 @@ books = 2
 
 start_time = time.time()
 for book in range(0, books):
-    print("EXECUT BOOK:", book)
+    print("EXECUTE BOOK:", book)
     try:
         download_gutenberg_book(working_directory, book)
 
@@ -21,7 +21,7 @@ for book in range(0, books):
         text = preprocess_text(text)
 
         bigrams = list(nltk_bigrams(text.split()))
-        #print(bigrams)
+        print(bigrams)
         trigrams = list(nltk_trigrams(text.split()))
 
         log_to_file(working_directory, book, bigrams, trigrams)
