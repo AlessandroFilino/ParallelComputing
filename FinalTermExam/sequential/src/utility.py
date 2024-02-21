@@ -30,35 +30,24 @@ def download_gutenberg_book(working_directory, book_id):
     except Exception as e:
         print(f'ERROR: {e}')
 
-def log_to_file(working_directory, book_number, bigrams, trigrams):
-    data = {
-        "book_number": book_number,
-        "bigrams": sorted([(bigram, count) for bigram, count in nltk.FreqDist(bigrams).items()], key=lambda x: x[1], reverse=True),
-        "trigrams": sorted([(trigram, count) for trigram, count in nltk.FreqDist(trigrams).items()], key=lambda x: x[1], reverse=True),
-    }
+def log_to_file(working_directory, results, ngrams_type): 
+    results_str_keys = {str(key): value for key, value in results.items()}
+    with open(f"{working_directory}/resources/analysis/analysis_book_{ngrams_type}.json", 'w', encoding='utf-8') as json_file:
+        json.dump(results_str_keys, json_file, indent=4)
 
-    with open(f"{working_directory}/resources/analysis/analysis_book_{book_number}.json", 'w', encoding='utf-8') as json_file:
-        json.dump(data, json_file, indent=4)
+    print(f"COMPLETE! Results available in: resources/analysis/analysis_book_{ngrams_type}.json")
 
-    print(f"COMPLETE! Results available in: resources/analysis/analysis_book_{book_number}.json")
+def make_histogram(working_directory, ngrams_to_plot, plot_all=False):
+    with open(f"{working_directory}/resources/analysis/analysis_book_{ngrams_to_plot}.json", 'r', encoding='utf-8') as json_file:
+        ngrams_data = json.load(json_file)
 
+    ngrams_frequencies = [(eval(ngram), count) for ngram, count in ngrams_data.items()]
 
-def make_histogram(working_directory, book_number, plot_all=False):
-    with open(f"{working_directory}/resources/analysis/analysis_book_{book_number}.json", 'r', encoding='utf-8') as json_file:
-        json_data = json.load(json_file)
-        bigrams_data = json_data['bigrams']
-        trigrams_data = json_data['trigrams']
-
-    bigram_frequencies = [(tuple(bigram), count) for bigram, count in bigrams_data]
-    trigram_frequencies = [(tuple(trigram), count) for trigram, count in trigrams_data]
-
-    if plot_all is False:
+    if not plot_all:
         number_of_plots = 50
-        plot_histogram(bigram_frequencies[:number_of_plots], 'Bigram Frequency Histogram', 'Bigram', 'Frequency')
-        plot_histogram(trigram_frequencies[:number_of_plots], 'Trigram Frequency Histogram', 'Trigram', 'Frequency')
+        plot_histogram(ngrams_frequencies[:number_of_plots], f'{ngrams_to_plot} Frequency Histogram', ngrams_to_plot, 'Frequency')
     else:
-        plot_histogram(bigram_frequencies, 'Bigram Frequency Histogram', 'Bigram', 'Frequency')
-        plot_histogram(trigram_frequencies, 'Trigram Frequency Histogram', 'Trigram', 'Frequency')
+        plot_histogram(ngrams_frequencies, f'{ngrams_to_plot} Frequency Histogram', ngrams_to_plot, 'Frequency')
     
 def plot_histogram(data, title, xlabel, ylabel):
     labels, values = zip(*data)
@@ -96,4 +85,3 @@ def clean_directory(directory):
         print(f"Cleaning complete for directory: '{directory}'.")
     except Exception as e:
         print(f"ERROR: {e}")
-
