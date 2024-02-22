@@ -110,7 +110,7 @@ def speed_up_parallelo():
 
     speed_up = []
     for i in range(len(num_threads)):
-        risultato = tempo_esecuzione_parallelo_asyncio[i] / tempo_esecuzione_parallelo_multiprocessing[i]
+        risultato = tempo_esecuzione_parallelo_multiprocessing[i] / tempo_esecuzione_parallelo_asyncio[i]
         speed_up.append(risultato)
 
     plt.scatter(num_threads, speed_up, color='red', marker='o', label='Speed-up')
