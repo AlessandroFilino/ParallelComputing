@@ -54,8 +54,6 @@ def sequenziale_parallelo_completo():
     plt.legend()
     plt.show()
 
-
-
 def speed_up_sequenziale_asyncio():
     #MAC
     num_threads = [1, 2, 3, 4, 5, 6, 7, 8, 16, 32]
@@ -126,8 +124,8 @@ def speed_up_parallelo():
     plt.show()
 
 
-sequenziale_parallelo()
-sequenziale_parallelo_completo()
-speed_up_sequenziale_asyncio()
-speed_up_sequenziale_multiprocessing()
-speed_up_parallelo()
+#sequenziale_parallelo()
+#sequenziale_parallelo_completo()
+#speed_up_sequenziale_asyncio()
+#speed_up_sequenziale_multiprocessing()
+#speed_up_parallelo()

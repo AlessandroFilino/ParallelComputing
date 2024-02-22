@@ -39,7 +39,7 @@ def combine_and_log_results(shared_queue, file_name):
 def main():
     setup_system(f"{working_directory}/resources/")
 
-    books = 100
+    books = 10
     
     manager = Manager()
     bigrams_shared_queue = manager.Queue()
@@ -48,7 +48,7 @@ def main():
     start_time = time.time()
     
     args = [(i, working_directory, bigrams_shared_queue, trigrams_shared_queue) for i in range(books)]
-    with Pool(processes=32) as process_pool: 
+    with Pool(processes=8) as process_pool: 
         process_pool.map(process_book, args)
     
     bigrams_process = Process(target=combine_and_log_results, args=(bigrams_shared_queue, "bigrams"))

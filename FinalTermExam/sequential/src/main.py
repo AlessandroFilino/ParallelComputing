@@ -40,7 +40,7 @@ def process_book(book, bigrams_shared_queue, trigrams_shared_queue):
 def main(): 
     setup_system(f"{working_directory}/resources/")
        
-    books = 100
+    books = 10
 
     bigrams_shared_queue = queue.Queue()
     trigrams_shared_queue = queue.Queue()
