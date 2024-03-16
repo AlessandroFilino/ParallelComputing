@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.18)
 
 project(MidTermExam LANGUAGES CUDA CXX)
 
-
 # Set executable name
 add_executable(MidTermExam src/main.cu)
 
@@ -17,3 +16,4 @@ target_compile_features(MidTermExam PUBLIC cxx_std_11)
 
 # Set NVCC flags
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --use_fast_math")
+set_target_properties(MidTermExam PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
