@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include <sys/time.h>
-#include <assert.h>
+
 #include "desKeyGenerator.h"
 #include "desTextEncryptor.h"
 #include "utility.h"
@@ -111,18 +111,6 @@ __device__ int d_final_permutation_table[64] = {
         33, 1, 41, 9, 49, 17, 57, 25
 };
 
-/*
-    int* cipher_current_password;
-    int* result_initial_permutation;
-    int* left_block;
-    int* right_block;
-    int* right_expanded;
-    int* xor_result;
-    int* block; 
-    int* s_box_result;
-    int* s_box_permuted_result;
-    int* new_left_block;
-    int* combined_key; */
 __device__ int* cuda_des_encrypt_text(int* bin_plain_text, int* sub_keys, int* cipher_text, int blockSize, int threads_number,
     int* result_initial_permutation, int* left_block, int* right_block, int* right_expanded, int* xor_result, 
     int* block, int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
@@ -257,13 +245,85 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
             __trap();
             return;
         }
+    }     
+}
+
+void setupGrid(int threads_number, int blockSize) {
+    int threads_per_block, num_block;
+
+    if (threads_number <= blockSize){
+        threads_per_block = threads_number;
+        num_block = 1;
+    } else if ((threads_number % 256) == 0){
+        threads_per_block = 256;
+        num_block = threads_number / 256;
+        blockSize = 256;
+    } else if ((threads_number % 128) == 0){
+        threads_per_block = 128;
+        num_block = threads_number / 128;
+        blockSize = 128;
+    } else if ((threads_number % 32) == 0){
+        threads_per_block = 32;
+        num_block = threads_number / 32;
+        blockSize = 32;
+    } else { 
+        int mod256 = threads_number % 256;
+        int mod128 = threads_number % 128;
+        int mod32 = threads_number % 32;
+
+        if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
+            threads_per_block = threads_number + (32 - mod256);
+            blockSize = 256;
+        } else if (mod128 <= mod32) {
+            threads_per_block = threads_number + (128 - mod128);
+            blockSize = 128;
+        } else {
+            threads_per_block = threads_number + (32 - mod32);
+            blockSize = 32;
+        }
+        num_block = threads_per_block / blockSize;
     }
+}
+
+void setupGrid(int threads_number, int blockSize, int *num_block, int *threads_per_block) {
+    if (threads_number <= blockSize) {
+        *threads_per_block = threads_number;
+        *num_block = 1;
+    } else if ((threads_number % 256) == 0) {
+        *threads_per_block = 256;
+        *num_block = threads_number / 256;
+        blockSize = 256;
+    } else if ((threads_number % 128) == 0) {
+        *threads_per_block = 128;
+        *num_block = threads_number / 128;
+        blockSize = 128;
+    } else if ((threads_number % 32) == 0) {
+        *threads_per_block = 32;
+        *num_block = threads_number / 32;
+        blockSize = 32;
+    } else {
+        int mod256 = threads_number % 256;
+        int mod128 = threads_number % 128;
+        int mod32 = threads_number % 32;
+
+        if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
+            *threads_per_block = threads_number + (32 - mod256);
+            blockSize = 256;
+        } else if (mod128 <= mod32) {
+            *threads_per_block = threads_number + (128 - mod128);
+            blockSize = 128;
+        } else {
+            *threads_per_block = threads_number + (32 - mod32);
+            blockSize = 32;
+        }
         
+        *num_block = threads_number / *threads_per_block;
+    }
 }
 
 void getGPUProperties(int gpuID) {
     cudaDeviceProp prop;
-    int deviceId = gpuID; // ID della tua GPU, potrebbe essere diverso se hai più di una GPU installata
+    int deviceId = gpuID;
 
     cudaGetDeviceProperties(&prop, deviceId);
 
@@ -311,41 +371,13 @@ int main() {
     cout << endl;
 
     //SETUP CUDA
-    getGPUProperties(0); //Get GPU info
-    unsigned int threads_number = 16384; //variabile e scelta dall'utente;
+    //getGPUProperties(0); //Get GPU info
+    unsigned int threads_number =384;
     int blockSize = 32;
 
-    int threads_per_block; //max 1024
+    int threads_per_block;
     int num_block;
-
-    if (threads_number <= blockSize){
-        threads_per_block = threads_number;
-        num_block = 1;
-    } else if (threads_number > blockSize) {
-        if ((threads_number % 256) == 0){
-            threads_per_block = 256;
-            num_block = threads_number / 256;
-            blockSize = 256;
-        } else if ((threads_number % 128) == 0){
-            threads_per_block = 128;
-            num_block = threads_number / 128;
-            blockSize = 128;
-        } else if ((threads_number % 32) == 0){
-            threads_per_block = 32;
-            num_block = threads_number / 32;
-            blockSize = 32;
-        }
-    } else { //DA FINIRE
-        int tmp = threads_number / 32;
-        if ((threads_number % 32) > 16) {
-            threads_number = (tmp + 1) * 32;
-        } else {
-            threads_number = tmp * 32;
-        }
-        num_block = threads_number / 32;
-        threads_per_block = 32;
-        
-    }
+    setupGrid(threads_number, blockSize, &num_block, &threads_per_block);
     printf("Setup: <<<Grid Size: %d, Threads per Block: %d>>>\n", num_block, threads_per_block);
 
     int password_length = 8;
@@ -394,7 +426,7 @@ int main() {
     gettimeofday(&start_time, NULL);
 
     cout << endl;
-
+    
     brute_force_attack<<<num_block, threads_per_block>>>(d_cipher_password_target, d_sub_keys, blockSize, threads_number, 
         password_length, current_password, bin_current_password, 
         cipher_current_password, result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
@@ -406,7 +438,7 @@ int main() {
         cout << "CUDA Error: " << cudaGetErrorString(error) << endl;
         cout << "Brute force attack aborted" << endl;
     }
-
+    
     cout << endl;
 
     gettimeofday(&end_time, NULL);
