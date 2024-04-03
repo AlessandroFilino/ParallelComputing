@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include <sys/time.h>
-
+#include <assert.h>
 #include "desKeyGenerator.h"
 #include "desTextEncryptor.h"
 #include "utility.h"
@@ -111,9 +111,9 @@ __device__ int d_final_permutation_table[64] = {
         33, 1, 41, 9, 49, 17, 57, 25
 };
 
-__device__ int* cuda_des_encrypt_text(int* bin_plain_text, int* sub_keys, int* cipher_text, int blockSize, int threads_number,
+__device__ int* cuda_des_encrypt_text(int* bin_plain_text, int* sub_keys, int* cipher_text, int blockSize,
     int* result_initial_permutation, int* left_block, int* right_block, int* right_expanded, int* xor_result, 
-    int* block, int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
+    int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
     
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
     
@@ -176,7 +176,6 @@ __device__ int* cuda_des_encrypt_text(int* bin_plain_text, int* sub_keys, int* c
     return cipher_text;
 }
 
-
 __device__ char* generate_all_possible_password(char* password, int password_length, int blockSize, long iteration) {
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
     
@@ -218,7 +217,7 @@ __device__ bool isBinaryEqual(int* string1, int* string2, int blockSize){
 __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys, int blockSize, int threads_number, 
     int password_length, char* current_password, int* bin_current_password, int* cipher_current_password,
     int* result_initial_permutation, int* left_block, int* right_block, int* right_expanded, int* xor_result, 
-    int* block, int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
+    int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
     
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
 
@@ -227,9 +226,9 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
         //printf("iteration %d \n", i);
         generate_all_possible_password(current_password, password_length, blockSize, i);
         d_string_to_binary(current_password, password_length, bin_current_password, blockSize);
-        cuda_des_encrypt_text(bin_current_password, d_sub_keys, cipher_current_password, blockSize, threads_number,
+        cuda_des_encrypt_text(bin_current_password, d_sub_keys, cipher_current_password, blockSize,
          result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
-         block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
+         s_box_result, s_box_permuted_result, new_left_block, combined_key);
     
         if(isBinaryEqual(cipher_current_password, cipher_password_target, blockSize)){
             printf("Find by thread n. %d! \n", index);
@@ -245,43 +244,8 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
             __trap();
             return;
         }
-    }     
-}
-
-void setupGrid(int threads_number, int blockSize, int *num_block, int *threads_per_block) {
-    if (threads_number <= blockSize) {
-        *threads_per_block = threads_number;
-        *num_block = 1;
-    } else if ((threads_number % 256) == 0) {
-        *threads_per_block = 256;
-        *num_block = threads_number / 256;
-        blockSize = 256;
-    } else if ((threads_number % 128) == 0) {
-        *threads_per_block = 128;
-        *num_block = threads_number / 128;
-        blockSize = 128;
-    } else if ((threads_number % 32) == 0) {
-        *threads_per_block = 32;
-        *num_block = threads_number / 32;
-        blockSize = 32;
-    } else {
-        int mod256 = threads_number % 256;
-        int mod128 = threads_number % 128;
-        int mod32 = threads_number % 32;
-
-        if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
-            *threads_per_block = threads_number + (32 - mod256);
-            blockSize = 256;
-        } else if (mod128 <= mod32) {
-            *threads_per_block = threads_number + (128 - mod128);
-            blockSize = 128;
-        } else {
-            *threads_per_block = threads_number + (32 - mod32);
-            blockSize = 32;
-        }
-        
-        *num_block = threads_number / *threads_per_block;
     }
+        
 }
 
 void getGPUProperties(int gpuID) {
@@ -334,13 +298,46 @@ int main() {
     cout << endl;
 
     //SETUP CUDA
-    //getGPUProperties(0); //Get GPU info
-    unsigned int threads_number =384;
+    getGPUProperties(0);
+    unsigned int threads_number = 65536;
     int blockSize = 32;
 
     int threads_per_block;
     int num_block;
-    setupGrid(threads_number, blockSize, &num_block, &threads_per_block);
+
+    if (threads_number <= blockSize){
+        threads_per_block = threads_number;
+        num_block = 1;
+    } else if ((threads_number % 256) == 0){
+            threads_per_block = 256;
+            num_block = threads_number / 256;
+            blockSize = 256;
+    } else if ((threads_number % 128) == 0){
+            threads_per_block = 128;
+            num_block = threads_number / 128;
+            blockSize = 128;
+    } else if ((threads_number % 32) == 0){
+            threads_per_block = 32;
+            num_block = threads_number / 32;
+            blockSize = 32;
+    } else {
+        int mod256 = threads_number % 256;
+        int mod128 = threads_number % 128;
+        int mod32 = threads_number % 32;
+
+        if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
+            threads_per_block = threads_number + (32 - mod256);
+            blockSize = 256;
+        } else if (mod128 <= mod32) {
+            threads_per_block = threads_number + (128 - mod128);
+            blockSize = 128;
+        } else {
+            threads_per_block = threads_number + (32 - mod32);
+            blockSize = 32;
+        }
+        num_block = threads_number / threads_per_block;
+    }
+
     printf("Setup: <<<Grid Size: %d, Threads per Block: %d>>>\n", num_block, threads_per_block);
 
     int password_length = 8;
@@ -352,7 +349,6 @@ int main() {
     int* right_block;
     int* right_expanded;
     int* xor_result;
-    int* block; 
     int* s_box_result;
     int* s_box_permuted_result;
     int* new_left_block;
@@ -366,7 +362,6 @@ int main() {
     cudaMalloc((void**)&right_block, (threads_number * 32 * sizeof(int)));
     cudaMalloc((void**)&right_expanded, (threads_number * 48 * sizeof(int)));
     cudaMalloc((void**)&xor_result, (threads_number * 48 * sizeof(int)));
-    cudaMalloc((void**)&block, (threads_number * 6 * sizeof(int)));
     cudaMalloc((void**)&s_box_result, (threads_number * 32 * sizeof(int)));
     cudaMalloc((void**)&s_box_permuted_result, (threads_number * 32 * sizeof(int)));
     cudaMalloc((void**)&new_left_block, (threads_number * 32 * sizeof(int)));
@@ -380,7 +375,6 @@ int main() {
     cudaMalloc((void**)&d_sub_keys, (16 * 48 * sizeof(int)));
     cudaMemcpy(d_sub_keys, d_sub_keys_1d, 16 * 48 * sizeof(int), cudaMemcpyHostToDevice);
 
-    //DA SISTEMARE --> è possibile avere qualcosa utilizzabile sia in gpu che in cpu ? tanto son odat statici
     long number_of_possible_passwords = (long)pow((double)allowed_char_size,(double)(password_length));
     cout << "Total of possible password: " << number_of_possible_passwords << " with: " << password_length << " characters" << endl;
     cout << endl;
@@ -389,11 +383,11 @@ int main() {
     gettimeofday(&start_time, NULL);
 
     cout << endl;
-    
+
     brute_force_attack<<<num_block, threads_per_block>>>(d_cipher_password_target, d_sub_keys, blockSize, threads_number, 
         password_length, current_password, bin_current_password, 
         cipher_current_password, result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
-        block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
+        s_box_result, s_box_permuted_result, new_left_block, combined_key);
     cudaDeviceSynchronize();
 
     cudaError_t error = cudaGetLastError();
@@ -401,7 +395,7 @@ int main() {
         cout << "CUDA Error: " << cudaGetErrorString(error) << endl;
         cout << "Brute force attack aborted" << endl;
     }
-    
+
     cout << endl;
 
     gettimeofday(&end_time, NULL);
@@ -417,7 +411,6 @@ int main() {
     cudaFree(right_block);
     cudaFree(right_expanded);
     cudaFree(xor_result);
-    cudaFree(block);
     cudaFree(s_box_result);
     cudaFree(s_box_permuted_result);
     cudaFree(new_left_block);
