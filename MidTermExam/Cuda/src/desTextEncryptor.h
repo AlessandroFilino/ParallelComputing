@@ -100,79 +100,56 @@ int final_permutation_table[64] = {
         33, 1, 41, 9, 49, 17, 57, 25
 };
 
+int* des_encrypt_text(const char* plain_text, int* sub_keys) {
+    int* cipher_text = (int*) malloc((64 * sizeof(int)));
 
-char* des_encrypt_text(const char* plain_text, char* sub_keys) {
-    char* cipher_text = (char*) malloc((64 * sizeof(char)));
-
-    char* bin_plain_text = (char*) malloc((64 * sizeof(char)));
-    string_to_binary(plain_text, bin_plain_text);
+    int* bin_plain_text = (int*) malloc((64 * sizeof(int)));
+    string_to_binary(plain_text, 8,  bin_plain_text);
     
-    char* result_initial_permutation = (char*) malloc((64 * sizeof(char)));
+    int* result_initial_permutation = (int*) malloc((64 * sizeof(int)));
 
     for (int i = 0; i < 64; i++) {
         result_initial_permutation[i] = bin_plain_text[initial_permutation_table[i] - 1]; 
     }
-    //cout <<"result_initial_permutation :"<< result_initial_permutation << endl;
+    
 
-    char* left_block = (char*) malloc((32 * sizeof(char)));
-    char* right_block = (char*) malloc((32 * sizeof(char)));
+    int* left_block = (int*) malloc((32 * sizeof(int)));
+    int* right_block = (int*) malloc((32 * sizeof(int)));
 
     for (int i = 0; i < 32; i++) {
         left_block[i] = result_initial_permutation[i];
         right_block[i] = result_initial_permutation[32 + i];
     }
-    //cout <<"left_block :"<< left_block << endl;
-    //cout <<"right_block :"<< right_block << endl;
 
-    char* right_expanded = (char*) malloc((48 * sizeof(char)));
-    char* xor_result = (char*) malloc((48 * sizeof(char)));
-    char* block = (char*) malloc((6 * sizeof(char)));
-    char* s_box_result = (char*) malloc((32 * sizeof(char)));
-    char* s_box_permuted_result = (char*) malloc((32 * sizeof(char)));
-    char* new_left_block = (char*) malloc((32 * sizeof(char)));
-    char* combined_key = (char*) malloc(64 * sizeof(char));
-
+    int* right_expanded = (int*) malloc((48 * sizeof(int)));
+    int* xor_result = (int*) malloc((48 * sizeof(int)));
+    int* block = (int*) malloc((6 * sizeof(int)));
+    int* s_box_result = (int*) malloc((32 * sizeof(int)));
+    int* s_box_permuted_result = (int*) malloc((32 * sizeof(int)));
+    int* new_left_block = (int*) malloc((32 * sizeof(int)));
+    int* combined_key = (int*) malloc(64 * sizeof(int));
 
     for (int round = 0; round < 16; round ++) {
-       //cout <<"left_block :"<< left_block << endl;
-        //cout <<"right_block :"<< right_block << endl;
+        make_permutation(right_block, expansion_permutation_table, 48, right_expanded);
 
         for (int i = 0; i < 48; i++) {
-            right_expanded[i] = right_block[expansion_permutation_table[i] - 1];
+            xor_result[i] = right_expanded[i] ^ sub_keys[round * 48 + i];
         }
-        //cout <<"right_expanded [" << round << "]" << right_expanded << endl;
 
-        for (int i = 0; i < 48; i++) {
-            xor_result[i] = sub_keys[round * 48 + i] ^ (right_expanded[i] - '0');
-        }
-        //cout << "xor_result: [" << round << "]" << xor_result << endl;
-
-        for (int i = 0; i < 8; i++){
-            for (int j = 0; j < 6; j++){
-                block[j] = xor_result[i * 6 + j];
-            }
-
-            int row = (block[0] - '0') * 2 + (block[5] - '0');
-            int col = (block[1] - '0') * 8 + (block[2] - '0') * 4 + (block[3] - '0') * 2 + (block[4] - '0');
-
-            int s_box_value = s_box_table[i][row][col];
-            
-            //
-            for (int k = 0; k < 4; k++) {
-                s_box_result[(i * 4) + k] = ((s_box_value >> (3 - k)) & 1) + '0';
+        for (int i = 0; i < 8; i++) {
+            int row = (xor_result[i * 6] << 1) + xor_result[i * 6 + 5];
+            int col = (xor_result[i * 6 + 1] << 3) + (xor_result[i * 6 + 2] << 2) + (xor_result[i * 6 + 3] << 1) + xor_result[i * 6 + 4];
+            int val = s_box_table[i][row][col];
+            for (int j = 0; j < 4; j++) {
+                s_box_result[i * 4 + j] = (val >> (3 - j)) & 1;
             }
         }
-        //cout <<"s_box_result [" << round << "]" << s_box_result << endl;
+
+        make_permutation(s_box_result, straight_permutation_table, 32, s_box_permuted_result);
 
         for (int i = 0; i < 32; i++) {
-            s_box_permuted_result[i] = s_box_result[straight_permutation_table[i] - 1];
+            new_left_block[i] = left_block[i] ^ s_box_permuted_result[i];
         }
-        //cout <<"s_box_permuted_result [" << round << "]" << s_box_permuted_result << endl;
-
-        for (int i = 0; i < 32; i++) {
-            new_left_block[i] = (left_block[i] - '0') ^ (s_box_permuted_result[i] - '0') + '0';
-        }
-        //cout << "new_left_block [" << round << "] " << new_left_block << endl;
 
         if (round != 15) {
             for (int i = 0; i < 32; i++) {
@@ -184,21 +161,14 @@ char* des_encrypt_text(const char* plain_text, char* sub_keys) {
                 left_block[i] = new_left_block[i];
             }
         }
-        
-        //cout << "left_block [" << round + 1 << "] " << left_block << endl;
-        //cout << "right_block [" << round + 1 << "] " << right_block << endl;
     }
     
     for (int i = 0; i< 32; i++) {
         combined_key[i] = left_block[i];
         combined_key[32 + i] = right_block[i];
     }
-    //cout << "combined_key: " << combined_key << endl;
 
-    for (int i = 0; i < 64; i++) {
-        cipher_text[i] = combined_key[final_permutation_table[i] - 1];
-    }
-    //cout << "cipher_text " << cipher_text << endl;
+    make_permutation(combined_key, final_permutation_table, 64, cipher_text);
 
     free(bin_plain_text);
     free(result_initial_permutation);

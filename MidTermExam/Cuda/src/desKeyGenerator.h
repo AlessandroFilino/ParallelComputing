@@ -34,18 +34,16 @@ static int key_compression_table[48] = {
         46, 42, 50, 36, 29, 32
 };
 
-char** create_sub_keys(char* key) {
-    char** sub_keys = (char**)malloc(16 * sizeof(char*)); // Memoria per 16 puntatori
+int** create_sub_keys(int* key) {
+    int** sub_keys = (int**)malloc(16 * sizeof(int*)); // Memoria per 16 puntatori
 
     // Applichiamo la prima permutazione alla chiave --> La chiave passa dai 64 bit iniziali a 56
-    char* resized_key = (char*)malloc(56 * sizeof(char));
-    for(int i = 0; i < 56; i++) {
-        resized_key[i] = key[parity_drop_table[i] - 1];
-    }
+    int* resized_key = (int*)malloc(56 * sizeof(int));
+    make_permutation(key, parity_drop_table, 56, resized_key);
 
     // Split Right and Left della chiave
-    char* left = (char*)malloc(28 * sizeof(char));
-    char* right = (char*)malloc(28 * sizeof(char));
+    int* left = (int*)malloc(28 * sizeof(int));
+    int* right = (int*)malloc(28 * sizeof(int));
 
     for (int i = 0; i < 28; i++) {
         left[i] = resized_key[i];
@@ -53,18 +51,19 @@ char** create_sub_keys(char* key) {
     }
 
     for (int i = 0; i < 16; i++) {
-        left = shift_left(left, shift_table[i]);
-        right = shift_left(right, shift_table[i]);
+        left = shift_left(left, shift_table[i], 28);
+        right = shift_left(right, shift_table[i], 28);
 
-        char* combined_key = (char*)malloc(56 * sizeof(char));
-        memcpy(combined_key, left, 28);
-        memcpy(combined_key + 28, right, 28);
 
-        char* roundKey = (char*)malloc(48 * sizeof(char));
-
-        for(int j = 0; j < 48; j++) {
-            roundKey[j] = combined_key[key_compression_table[j] - 1];
+        int* combined_key = (int*)malloc(56 * sizeof(int));
+        for(int j = 0; j < 28; j++){
+            combined_key[j] = left[j];
+            combined_key[j + 28] = right[j];
         }
+
+        int* roundKey = (int*)malloc(48 * sizeof(int));
+        make_permutation(combined_key, key_compression_table, 48, roundKey);
+
         sub_keys[i] = roundKey;
         free(combined_key);
     }

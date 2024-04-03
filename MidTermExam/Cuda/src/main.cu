@@ -1,11 +1,22 @@
 #include <iostream>
 #include <cuda_runtime.h>
 #include <sys/time.h>
+#include <assert.h>
 #include "desKeyGenerator.h"
 #include "desTextEncryptor.h"
 #include "utility.h"
 
 using namespace std;
+
+__device__ const char d_allowed_char [] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F',
+'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+'W', 'X', 'Y', 'Z', '1', '2', '3', '4',
+'5', '6', '7', '8', '9', '0', '.', '/'};
+__device__ long d_allowed_char_size = sizeof(d_allowed_char) / sizeof(d_allowed_char[0]);
 
 __device__ int d_initial_permutation_table[64] = {
         58, 50, 42, 34, 26, 18, 10, 2,
@@ -100,14 +111,26 @@ __device__ int d_final_permutation_table[64] = {
         33, 1, 41, 9, 49, 17, 57, 25
 };
 
-__device__ char* cuda_des_encrypt_text(char* bin_plain_text, char* sub_keys, char* cipher_text, int blockSize, int threads_number,
-    char* result_initial_permutation, char* left_block, char* right_block, char* right_expanded, char* xor_result, 
-    char* block, char* s_box_result, char* s_box_permuted_result, char* new_left_block, char* combined_key) {
-
-    int index = blockIdx.x * blockSize + threadIdx.x;
-
+/*
+    int* cipher_current_password;
+    int* result_initial_permutation;
+    int* left_block;
+    int* right_block;
+    int* right_expanded;
+    int* xor_result;
+    int* block; 
+    int* s_box_result;
+    int* s_box_permuted_result;
+    int* new_left_block;
+    int* combined_key; */
+__device__ int* cuda_des_encrypt_text(int* bin_plain_text, int* sub_keys, int* cipher_text, int blockSize, int threads_number,
+    int* result_initial_permutation, int* left_block, int* right_block, int* right_expanded, int* xor_result, 
+    int* block, int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
+    
+    unsigned int index = blockIdx.x * blockSize + threadIdx.x;
+    
     for (int i = 0; i < 64; i++) {
-        result_initial_permutation[index * 64 + i] = bin_plain_text[d_initial_permutation_table[i] - 1];
+        result_initial_permutation[index * 64 + i] = bin_plain_text[index * 64 + d_initial_permutation_table[i] - 1]; 
     }
 
     for (int i = 0; i < 32; i++) {
@@ -121,21 +144,15 @@ __device__ char* cuda_des_encrypt_text(char* bin_plain_text, char* sub_keys, cha
         }
 
         for (int i = 0; i < 48; i++) {
-            xor_result[index * 48 + i] = sub_keys[round * 48 + i] ^ (right_expanded[index * 48 + i] - '0');
+            xor_result[index * 48 + i] = right_expanded[index * 48 + i] ^ sub_keys[round * 48 + i];
         }
 
-        for (int i = 0; i < 8; i++){
-            for (int j = 0; j < 6; j++){
-                block[j] = xor_result[index * 48 + i * 6 + j];
-            }
-
-            int row = (block[0] - '0') * 2 + (block[5] - '0');
-            int col = (block[1] - '0') * 8 + (block[2] - '0') * 4 + (block[3] - '0') * 2 + (block[4] - '0');
-
-            int s_box_value = d_s_box_table[i][row][col];
-            
-            for (int k = 0; k < 4; k++) {
-                s_box_result[index * 32 + i * 4 + k] = ((s_box_value >> (3 - k)) & 1) + '0';
+        for (int i = 0; i < 8; i++) {
+            int row = (xor_result[index * 48 + i * 6] << 1) + xor_result[index * 48 + i * 6 + 5];
+            int col = (xor_result[index * 48 + i * 6 + 1] << 3) + (xor_result[index * 48 + i * 6 + 2] << 2) + (xor_result[index * 48 + i * 6 + 3] << 1) + xor_result[index * 48 + i * 6 + 4];
+            int val = d_s_box_table[i][row][col];
+            for (int j = 0; j < 4; j++) {
+                s_box_result[index * 32 + i * 4 + j] = (val >> (3 - j)) & 1;
             }
         }
 
@@ -144,7 +161,7 @@ __device__ char* cuda_des_encrypt_text(char* bin_plain_text, char* sub_keys, cha
         }
 
         for (int i = 0; i < 32; i++) {
-            new_left_block[index * 32 + i] = (left_block[index * 32 + i] - '0') ^ (s_box_permuted_result[index * 32 + i] - '0') + '0';
+            new_left_block[index * 32 + i] = left_block[index * 32 + i] ^ s_box_permuted_result[index * 32 + i];
         }
 
         if (round != 15) {
@@ -171,42 +188,36 @@ __device__ char* cuda_des_encrypt_text(char* bin_plain_text, char* sub_keys, cha
     return cipher_text;
 }
 
+
 __device__ char* generate_all_possible_password(char* password, int password_length, int blockSize, long iteration) {
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
-    for (int j = 0; j < password_length - 1; j++) {
-        password[index * password_length + j] = d_allowed_char[iteration % allowed_char_size];
-        iteration /= allowed_char_size;
+    
+    for (int j = 0; j < password_length; j++) {
+        password[index * password_length + j] = d_allowed_char[iteration % d_allowed_char_size];
+        iteration /= d_allowed_char_size;
     } 
-
-    //JUST FOR TESTING
-    /*
-    char prev[8];
-    for(int i=0; i< 7; i++){
-        prev[i] = password[index*password_length + i];
-    } 
-    printf("thread n. %d pwd: %s\n",index, prev);
-    */
-
+    
     return password;
 }
 
-__device__ char* d_string_to_binary(char* string_text, int password_length, char* bin_text, int blockSize) {
+__device__ int* d_string_to_binary(char* string_text, int password_length, int* bin_text, int blockSize) {
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
-
-    int start_index = 0;
-    for (int i = 0; i < password_length - 1; i++) {
+    
+    int current_index = 0;
+    for (int i = 0; i < password_length; i++) {
+        char currentChar = string_text[index * password_length + i];
         for (int j = 7; j >= 0; --j) {
-            bin_text[(index * password_length * 8) + (i * 8) + (7 - j)] = ((string_text[i] >> j) & 1) ? '1' : '0';
+            bin_text[index * 64 + current_index++] = (currentChar >> j) & 1;
         }
     }
 
     return bin_text;
 }
 
-__device__ bool isBinaryStringEqual(char* string1, char* string2, int blockSize){
+__device__ bool isBinaryEqual(int* string1, int* string2, int blockSize){
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
     bool isEqual = true;
-    for (int i= 0; i < 63; i++) {
+    for (int i = 0; i < 64; i++) {
         if(string1[(index * 64) + i] != string2[i]){
             isEqual = false;
         }
@@ -215,34 +226,24 @@ __device__ bool isBinaryStringEqual(char* string1, char* string2, int blockSize)
     return isEqual;
 }
 
-__global__ void brute_force_attack(char* cipher_password_target, char* sub_keys_1d, int blockSize, int threads_number, 
-    int password_length, char* current_password, char* bin_current_password, char* cipher_current_password,
-    char* result_initial_permutation, char* left_block, char* right_block, char* right_expanded, char* xor_result, 
-    char* block, char* s_box_result, char* s_box_permuted_result, char* new_left_block, char* combined_key) {
+__global__ void brute_force_attack(int* cipher_password_target, int* sub_keys_1d, int blockSize, int threads_number, 
+    int password_length, char* current_password, int* bin_current_password, int* cipher_current_password,
+    int* result_initial_permutation, int* left_block, int* right_block, int* right_expanded, int* xor_result, 
+    int* block, int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
     
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
-    long number_of_possible_passwords = (long)pow((double)allowed_char_size,(double)password_length);
-    bool password_found = false;
-    
-    long password_per_thread = number_of_possible_passwords / threads_number;
-    long start_index = index * password_per_thread;
-    long end_index = password_per_thread + start_index;
-    
-    for (long i = start_index; i < end_index; i++){
-        generate_all_possible_password(current_password, password_length, blockSize, i);
+        printf("iteration %d \n", index);
+        generate_all_possible_password(current_password, password_length, blockSize, index);
         d_string_to_binary(current_password, password_length, bin_current_password, blockSize);
         cuda_des_encrypt_text(bin_current_password, sub_keys_1d, cipher_current_password, blockSize, threads_number,
-            result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
-            block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
+         result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
+         block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
+    
+    if(isBinaryEqual(cipher_current_password, cipher_password_target, blockSize)){
+        printf("Find by thread n. %d!", index);
+        return;
+    }
         
-        if (isBinaryStringEqual(cipher_current_password, cipher_password_target, blockSize)){
-            password_found = true;
-            printf("Password is found! \n");
-            return;
-        }
-        
-
-    } 
 }
 
 void getGPUProperties(int gpuID) {
@@ -251,92 +252,122 @@ void getGPUProperties(int gpuID) {
 
     cudaGetDeviceProperties(&prop, deviceId);
 
-    std::cout << "Proprietà della GPU:" << std::endl;
-    std::cout << "Nome: " << prop.name << std::endl;
-    std::cout << "Massimo numero di thread per blocco: " << prop.maxThreadsPerBlock << std::endl;
+    std::cout << "GPU info:" << std::endl;
+    std::cout << "Name: " << prop.name << std::endl;
+    std::cout << "Max number of threads for block: " << prop.maxThreadsPerBlock << std::endl;
+    std::cout << "Max blocks number : " << prop.maxGridSize[0] << std::endl;
 }
 
 int main() {
-
     //SETUP DES
     const char* key = "A4rT9v.w";
-    char* des_key = (char*) malloc(64 * sizeof(char));
-    string_to_binary(key, des_key);
+    int* des_key = (int*) malloc(64 * sizeof(int));
+    string_to_binary(key, 8, des_key);
 
-    cout << "Binary representation of the key'" << key << "': " << des_key << endl;
+    cout << "Binary representation of the key'" << key << "': ";
+    for(int i = 0; i < 64; i++){
+        cout << des_key[i];
+    }
+    cout << endl;
     
-    char** sub_keys = create_sub_keys(des_key);
-    char sub_keys_1d[16 * 48]; //creiamo un array 1D in cui inseriamo le chiavi da trasferire in GPU
+    int** sub_keys = create_sub_keys(des_key);
+    for(int i = 0; i < 16; i++){
+        for(int j = 0; j < 48; j++){
+        }
+    }
+    int sub_keys_1d[16 * 48]; //creiamo un array 1D in cui inseriamo le chiavi da trasferire in GPU
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 48; j++) {
             sub_keys_1d[(i * 48) + j] = sub_keys[i][j];  
         }
     }
-
+    
+    cout << endl;
+    //SETUP TARGET PASSWORD
+    const char* password = "aaaaaaaa";//"2/W.caaa";
+                           
+    
+    int* cipher_password_target = des_encrypt_text(password, sub_keys_1d);
+    cout << "Password to find: '" << password << "' encrypted with DES: ";
+    for(int i = 0; i < 64; i++){
+        cout << cipher_password_target[i];
+    }
     cout << endl;
 
-    //SETUP TARGET PASSWORD
-    const char* password = "Zaaaaaaa";
-    char* cipher_password_target = des_encrypt_text(password, sub_keys_1d);
-    cout << "Password to find: '" << password << "' encrypted with DES: " << cipher_password_target << endl;
-
     //SETUP CUDA
-    //getGPUProperties(0); //Get info
-    unsigned int threads_number = 1;
+    getGPUProperties(0); //Get GPU info
+    unsigned int threads_number = 30; //variabile e scelta dall'utente;
     int blockSize = 32;
 
-    //Setup block
-    int numBlocks;
-    int threads_per_block;
-    if (threads_number <= 32) {
-        numBlocks = 1;
+    int threads_per_block; //max 1024
+    int num_block;
+
+    if (threads_number <= blockSize){
         threads_per_block = threads_number;
-    } else if (threads_number % 128 == 0) {
-        numBlocks = threads_number / 128;
-        threads_per_block = 128;
-    } else {
-        numBlocks = (threads_number + 31) / 32;  // Arrotonda al prossimo multiplo di 32
+        num_block = 1;
+    } else if (threads_number > blockSize) {
+        if ((threads_number % 128) == 0){
+            threads_per_block = 128;
+            num_block = threads_number / 128;
+            blockSize = 128;
+        } else if ((threads_number % 32) == 0){
+            threads_per_block = 32;
+            num_block = threads_number / 32;
+            blockSize = 32;
+        }
+    } else { //DA FINIRE
+        int tmp = threads_number / 32;
+        if ((threads_number % 32) > 16) {
+            threads_number = (tmp + 1) * 32;
+        } else {
+            threads_number = tmp * 32;
+        }
+        num_block = threads_number / 32;
         threads_per_block = 32;
+        
     }
-    printf("Setup: <<<%d,%d>>>\n", numBlocks, threads_per_block);
-    
-    int password_length = 8;  //length + 1 for \0
+    printf("Setup: <<<Grid Size: %d, Threads per Block: %d>>>\n", num_block, threads_per_block);
+    int password_length = 8;
     char* current_password;
-    char* bin_current_password;
-    char* cipher_current_password;
-    char* result_initial_permutation;
-    char* left_block;
-    char* right_block;
-    char* right_expanded;
-    char* xor_result;
-    char* block; 
-    char* s_box_result;
-    char* s_box_permuted_result;
-    char* new_left_block;
-    char* combined_key;
+    int* bin_current_password;
+    int* cipher_current_password;
+    int* result_initial_permutation;
+    int* left_block;
+    int* right_block;
+    int* right_expanded;
+    int* xor_result;
+    int* block; 
+    int* s_box_result;
+    int* s_box_permuted_result;
+    int* new_left_block;
+    int* combined_key;
 
-    cudaMalloc((void**)&current_password, (threads_number * (password_length +1) * sizeof(char)));
-    cudaMalloc((void**)&bin_current_password, (threads_number * 64 * sizeof(char)));
-    cudaMalloc((void**)&cipher_current_password, (threads_number * 64 * sizeof(char)));
-    cudaMalloc((void**)&result_initial_permutation, (threads_number * 64 * sizeof(char)));
-    cudaMalloc((void**)&left_block, (threads_number * 32 * sizeof(char)));
-    cudaMalloc((void**)&right_block, (threads_number * 32 * sizeof(char)));
-    cudaMalloc((void**)&right_expanded, (threads_number * 48 * sizeof(char)));
-    cudaMalloc((void**)&xor_result, (threads_number * 48 * sizeof(char)));
-    cudaMalloc((void**)&block, (threads_number * 6 * sizeof(char)));
-    cudaMalloc((void**)&s_box_result, (threads_number * 32 * sizeof(char)));
-    cudaMalloc((void**)&s_box_permuted_result, (threads_number * 32 * sizeof(char)));
-    cudaMalloc((void**)&new_left_block, (threads_number * 32 * sizeof(char)));
-    cudaMalloc((void**)&combined_key, (threads_number * 64 * sizeof(char)));
+    cudaMalloc((void**)&current_password, (threads_number * password_length * sizeof(char)));
+    cudaMalloc((void**)&bin_current_password, (threads_number * password_length * 8 * sizeof(int)));
+    cudaMalloc((void**)&cipher_current_password, (threads_number * 64 * sizeof(int)));
+    cudaMalloc((void**)&result_initial_permutation, (threads_number * 64 * sizeof(int)));
+    cudaMalloc((void**)&left_block, (threads_number * 32 * sizeof(int)));
+    cudaMalloc((void**)&right_block, (threads_number * 32 * sizeof(int)));
+    cudaMalloc((void**)&right_expanded, (threads_number * 48 * sizeof(int)));
+    cudaMalloc((void**)&xor_result, (threads_number * 48 * sizeof(int)));
+    cudaMalloc((void**)&block, (threads_number * 6 * sizeof(int)));
+    cudaMalloc((void**)&s_box_result, (threads_number * 32 * sizeof(int)));
+    cudaMalloc((void**)&s_box_permuted_result, (threads_number * 32 * sizeof(int)));
+    cudaMalloc((void**)&new_left_block, (threads_number * 32 * sizeof(int)));
+    cudaMalloc((void**)&combined_key, (threads_number * 64 * sizeof(int)));
 
-    char* d_cipher_password_target;
-    cudaMalloc((void**)&d_cipher_password_target, (threads_number * 64 * sizeof(char)));
-    cudaMemcpy(d_cipher_password_target, cipher_password_target, 64 * sizeof(char), cudaMemcpyHostToDevice);
 
-    char* d_sub_keys;
-    cudaMalloc((void**)&d_sub_keys, (16 * 48 * sizeof(char)));
-    cudaMemcpy(d_sub_keys, sub_keys_1d, 16 * 48 * sizeof(char), cudaMemcpyHostToDevice);
+    int* d_cipher_password_target;
+    cudaMalloc((void**)&d_cipher_password_target, (threads_number * password_length * 8 * sizeof(int)));
+    cudaMemcpy(d_cipher_password_target, cipher_password_target, password_length * 8 * sizeof(int), cudaMemcpyHostToDevice);
 
+    int* d_sub_keys;
+    cudaMalloc((void**)&d_sub_keys, (16 * 48 * sizeof(int)));
+    cudaMemcpy(d_sub_keys, sub_keys_1d, 16 * 48 * sizeof(int), cudaMemcpyHostToDevice);
+
+    
+
+    //DA SISTEMARE
     long number_of_possible_passwords = (long)pow((double)allowed_char_size,(double)(password_length));
     cout << "Total of possible password: " << number_of_possible_passwords << " with: " << password_length << " characters" << endl;
     cout << endl;
@@ -346,22 +377,23 @@ int main() {
 
     cout << endl;
 
-    brute_force_attack<<<numBlocks, threads_per_block>>>(d_cipher_password_target, d_sub_keys, blockSize, threads_number, 
-        (password_length +1), current_password, bin_current_password, 
+    brute_force_attack<<<num_block, threads_per_block>>>(d_cipher_password_target, d_sub_keys, blockSize, threads_number, 
+        password_length, current_password, bin_current_password, 
         cipher_current_password, result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
         block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
     cudaDeviceSynchronize();
     cudaError_t error = cudaGetLastError();
     if (error != cudaSuccess) {
-        cout << "Errore CUDA: " << cudaGetErrorString(error) << endl;
+        cout << "CUDA Error: " << cudaGetErrorString(error) << endl;
+        cout << "Brute force attack aborted" << endl;
     }
 
     cout << endl;
 
     gettimeofday(&end_time, NULL);
     double total_time = ((end_time.tv_sec  - start_time.tv_sec) * 1000000u + end_time.tv_usec - start_time.tv_usec) / 1.e6;
-    cout << "Tempo richiesto: " << total_time << " s" << endl;
-    cout << "Attacco brute force terminato" << endl;
+    cout << "Execution Time: " << total_time << " s" << endl;
+    cout << "Brute force attack terminated" << endl;
 
 
     cudaFree(current_password);
@@ -379,6 +411,6 @@ int main() {
     cudaFree(combined_key);
     cudaFree(d_sub_keys);
     cudaFree(d_cipher_password_target);
-
     return 0;
 }
+
