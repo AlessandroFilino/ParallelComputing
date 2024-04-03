@@ -248,43 +248,6 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
     }     
 }
 
-void setupGrid(int threads_number, int blockSize) {
-    int threads_per_block, num_block;
-
-    if (threads_number <= blockSize){
-        threads_per_block = threads_number;
-        num_block = 1;
-    } else if ((threads_number % 256) == 0){
-        threads_per_block = 256;
-        num_block = threads_number / 256;
-        blockSize = 256;
-    } else if ((threads_number % 128) == 0){
-        threads_per_block = 128;
-        num_block = threads_number / 128;
-        blockSize = 128;
-    } else if ((threads_number % 32) == 0){
-        threads_per_block = 32;
-        num_block = threads_number / 32;
-        blockSize = 32;
-    } else { 
-        int mod256 = threads_number % 256;
-        int mod128 = threads_number % 128;
-        int mod32 = threads_number % 32;
-
-        if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
-            threads_per_block = threads_number + (32 - mod256);
-            blockSize = 256;
-        } else if (mod128 <= mod32) {
-            threads_per_block = threads_number + (128 - mod128);
-            blockSize = 128;
-        } else {
-            threads_per_block = threads_number + (32 - mod32);
-            blockSize = 32;
-        }
-        num_block = threads_per_block / blockSize;
-    }
-}
-
 void setupGrid(int threads_number, int blockSize, int *num_block, int *threads_per_block) {
     if (threads_number <= blockSize) {
         *threads_per_block = threads_number;
