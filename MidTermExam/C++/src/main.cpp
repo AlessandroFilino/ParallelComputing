@@ -73,7 +73,7 @@ int main() {
         if (chiper_password == cipher_password_generate){
             cout << "Password trovata!" << endl;
             gettimeofday(&end_time, NULL);
-            double total_time = ((end_time.tv_sec  - start_time.tv_sec) * 1000000u + start_time.tv_usec - end_time.tv_usec) / 1.e6;
+            double total_time = ((end_time.tv_sec  - start_time.tv_sec) * 1000000u + end_time.tv_usec - start_time.tv_usec) / 1.e6;
             cout << "Tempo richiesto: " << total_time << " s" << endl;
             cout << "Attacco brute force terminato" << endl;
             break;
