@@ -35,13 +35,11 @@ static int key_compression_table[48] = {
 };
 
 int** create_sub_keys(int* key) {
-    int** sub_keys = (int**)malloc(16 * sizeof(int*)); // Memoria per 16 puntatori
+    int** sub_keys = (int**)malloc(16 * sizeof(int*));
 
-    // Applichiamo la prima permutazione alla chiave --> La chiave passa dai 64 bit iniziali a 56
     int* resized_key = (int*)malloc(56 * sizeof(int));
     make_permutation(key, parity_drop_table, 56, resized_key);
 
-    // Split Right and Left della chiave
     int* left = (int*)malloc(28 * sizeof(int));
     int* right = (int*)malloc(28 * sizeof(int));
 
@@ -73,8 +71,6 @@ int** create_sub_keys(int* key) {
 
     return sub_keys;
 }
-
-
 
 #endif //DESKEYGENERATOR_H
 

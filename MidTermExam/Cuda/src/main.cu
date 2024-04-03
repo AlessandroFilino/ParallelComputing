@@ -196,7 +196,7 @@ __device__ char* generate_all_possible_password(char* password, int password_len
         password[index * password_length + j] = d_allowed_char[iteration % d_allowed_char_size];
         iteration /= d_allowed_char_size;
     } 
-    
+
     return password;
 }
 
@@ -216,6 +216,7 @@ __device__ int* d_string_to_binary(char* string_text, int password_length, int* 
 
 __device__ bool isBinaryEqual(int* string1, int* string2, int blockSize){
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
+
     bool isEqual = true;
     for (int i = 0; i < 64; i++) {
         if(string1[(index * 64) + i] != string2[i]){
@@ -226,22 +227,36 @@ __device__ bool isBinaryEqual(int* string1, int* string2, int blockSize){
     return isEqual;
 }
 
-__global__ void brute_force_attack(int* cipher_password_target, int* sub_keys_1d, int blockSize, int threads_number, 
+__global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys, int blockSize, int threads_number, 
     int password_length, char* current_password, int* bin_current_password, int* cipher_current_password,
     int* result_initial_permutation, int* left_block, int* right_block, int* right_expanded, int* xor_result, 
     int* block, int* s_box_result, int* s_box_permuted_result, int* new_left_block, int* combined_key) {
     
     unsigned int index = blockIdx.x * blockSize + threadIdx.x;
-        printf("iteration %d \n", index);
-        generate_all_possible_password(current_password, password_length, blockSize, index);
+
+    long number_of_possible_passwords = (long)pow((double)d_allowed_char_size,(double)(password_length));
+    for(long i = index; i < number_of_possible_passwords; i += threads_number){
+        //printf("iteration %d \n", i);
+        generate_all_possible_password(current_password, password_length, blockSize, i);
         d_string_to_binary(current_password, password_length, bin_current_password, blockSize);
-        cuda_des_encrypt_text(bin_current_password, sub_keys_1d, cipher_current_password, blockSize, threads_number,
+        cuda_des_encrypt_text(bin_current_password, d_sub_keys, cipher_current_password, blockSize, threads_number,
          result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
          block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
     
-    if(isBinaryEqual(cipher_current_password, cipher_password_target, blockSize)){
-        printf("Find by thread n. %d!", index);
-        return;
+        if(isBinaryEqual(cipher_current_password, cipher_password_target, blockSize)){
+            printf("Find by thread n. %d! \n", index);
+            printf("password is: '");
+            for(int j = 0; j < 8; j++){
+                printf("%c", current_password[index * password_length + j]);
+            }
+            printf("' in DES: '");
+            for(int j = 0; j < 64; j++){
+                printf("%d", cipher_current_password[index * password_length * 8 + j]);
+            }
+            printf("'\n");
+            __trap();
+            return;
+        }
     }
         
 }
@@ -264,7 +279,7 @@ int main() {
     int* des_key = (int*) malloc(64 * sizeof(int));
     string_to_binary(key, 8, des_key);
 
-    cout << "Binary representation of the key'" << key << "': ";
+    cout << "Binary representation of the key '" << key << "': ";
     for(int i = 0; i < 64; i++){
         cout << des_key[i];
     }
@@ -275,28 +290,29 @@ int main() {
         for(int j = 0; j < 48; j++){
         }
     }
-    int sub_keys_1d[16 * 48]; //creiamo un array 1D in cui inseriamo le chiavi da trasferire in GPU
+
+    int d_sub_keys_1d[16 * 48];
     for (int i = 0; i < 16; i++) {
         for (int j = 0; j < 48; j++) {
-            sub_keys_1d[(i * 48) + j] = sub_keys[i][j];  
+            d_sub_keys_1d[(i * 48) + j] = sub_keys[i][j];  
         }
     }
     
     cout << endl;
+
     //SETUP TARGET PASSWORD
-    const char* password = "aaaaaaaa";//"2/W.caaa";
-                           
-    
-    int* cipher_password_target = des_encrypt_text(password, sub_keys_1d);
+    const char* password = "2/W.caaa";
+    int* cipher_password_target = des_encrypt_text(password, d_sub_keys_1d);
     cout << "Password to find: '" << password << "' encrypted with DES: ";
     for(int i = 0; i < 64; i++){
         cout << cipher_password_target[i];
     }
+
     cout << endl;
 
     //SETUP CUDA
     getGPUProperties(0); //Get GPU info
-    unsigned int threads_number = 30; //variabile e scelta dall'utente;
+    unsigned int threads_number = 16384; //variabile e scelta dall'utente;
     int blockSize = 32;
 
     int threads_per_block; //max 1024
@@ -306,7 +322,11 @@ int main() {
         threads_per_block = threads_number;
         num_block = 1;
     } else if (threads_number > blockSize) {
-        if ((threads_number % 128) == 0){
+        if ((threads_number % 256) == 0){
+            threads_per_block = 256;
+            num_block = threads_number / 256;
+            blockSize = 256;
+        } else if ((threads_number % 128) == 0){
             threads_per_block = 128;
             num_block = threads_number / 128;
             blockSize = 128;
@@ -327,6 +347,7 @@ int main() {
         
     }
     printf("Setup: <<<Grid Size: %d, Threads per Block: %d>>>\n", num_block, threads_per_block);
+
     int password_length = 8;
     char* current_password;
     int* bin_current_password;
@@ -356,18 +377,15 @@ int main() {
     cudaMalloc((void**)&new_left_block, (threads_number * 32 * sizeof(int)));
     cudaMalloc((void**)&combined_key, (threads_number * 64 * sizeof(int)));
 
-
     int* d_cipher_password_target;
     cudaMalloc((void**)&d_cipher_password_target, (threads_number * password_length * 8 * sizeof(int)));
     cudaMemcpy(d_cipher_password_target, cipher_password_target, password_length * 8 * sizeof(int), cudaMemcpyHostToDevice);
 
     int* d_sub_keys;
     cudaMalloc((void**)&d_sub_keys, (16 * 48 * sizeof(int)));
-    cudaMemcpy(d_sub_keys, sub_keys_1d, 16 * 48 * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_sub_keys, d_sub_keys_1d, 16 * 48 * sizeof(int), cudaMemcpyHostToDevice);
 
-    
-
-    //DA SISTEMARE
+    //DA SISTEMARE --> è possibile avere qualcosa utilizzabile sia in gpu che in cpu ? tanto son odat statici
     long number_of_possible_passwords = (long)pow((double)allowed_char_size,(double)(password_length));
     cout << "Total of possible password: " << number_of_possible_passwords << " with: " << password_length << " characters" << endl;
     cout << endl;
@@ -382,6 +400,7 @@ int main() {
         cipher_current_password, result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
         block, s_box_result, s_box_permuted_result, new_left_block, combined_key);
     cudaDeviceSynchronize();
+
     cudaError_t error = cudaGetLastError();
     if (error != cudaSuccess) {
         cout << "CUDA Error: " << cudaGetErrorString(error) << endl;
@@ -394,7 +413,6 @@ int main() {
     double total_time = ((end_time.tv_sec  - start_time.tv_sec) * 1000000u + end_time.tv_usec - start_time.tv_usec) / 1.e6;
     cout << "Execution Time: " << total_time << " s" << endl;
     cout << "Brute force attack terminated" << endl;
-
 
     cudaFree(current_password);
     cudaFree(bin_current_password);
@@ -411,6 +429,6 @@ int main() {
     cudaFree(combined_key);
     cudaFree(d_sub_keys);
     cudaFree(d_cipher_password_target);
+
     return 0;
 }
-

@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-int initial_permutation_table[64] = {
+static int initial_permutation_table[64] = {
         58, 50, 42, 34, 26, 18, 10, 2,
         60, 52, 44, 36, 28, 20, 12, 4,
         62, 54, 46, 38, 30, 22, 14, 6,
@@ -18,7 +18,7 @@ int initial_permutation_table[64] = {
         63, 55, 47, 39, 31, 23, 15, 7
 };
 
-int expansion_permutation_table[48] = {
+static int expansion_permutation_table[48] = {
         32, 1, 2, 3, 4, 5, 4, 5,
         6, 7, 8, 9, 8, 9, 10, 11,
         12, 13, 12, 13, 14, 15, 16, 17,
@@ -27,7 +27,7 @@ int expansion_permutation_table[48] = {
         28, 29, 28, 29, 30, 31, 32, 1
 };
 
-int s_box_table[8][4][16] = {
+static int s_box_table[8][4][16] = {
         {
                 14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7,
                 0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8,
@@ -78,7 +78,7 @@ int s_box_table[8][4][16] = {
         }
 };
 
-int straight_permutation_table[32] = {
+static int straight_permutation_table[32] = {
         16,  7, 20, 21,
         29, 12, 28, 17,
         1, 15, 23, 26,
@@ -89,7 +89,7 @@ int straight_permutation_table[32] = {
         22, 11,  4, 25
 };
 
-int final_permutation_table[64] = {
+static int final_permutation_table[64] = {
         40, 8, 48, 16, 56, 24, 64, 32,
         39, 7, 47, 15, 55, 23, 63, 31,
         38, 6, 46, 14, 54, 22, 62, 30,
@@ -112,10 +112,8 @@ int* des_encrypt_text(const char* plain_text, int* sub_keys) {
         result_initial_permutation[i] = bin_plain_text[initial_permutation_table[i] - 1]; 
     }
     
-
     int* left_block = (int*) malloc((32 * sizeof(int)));
     int* right_block = (int*) malloc((32 * sizeof(int)));
-
     for (int i = 0; i < 32; i++) {
         left_block[i] = result_initial_permutation[i];
         right_block[i] = result_initial_permutation[32 + i];
