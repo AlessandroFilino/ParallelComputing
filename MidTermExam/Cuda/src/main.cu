@@ -8,14 +8,31 @@
 
 using namespace std;
 
-__device__ const char d_allowed_char [] = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
-'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
-'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F',
-'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
-'W', 'X', 'Y', 'Z', '1', '2', '3', '4',
-'5', '6', '7', '8', '9', '0', '.', '/'};
+/*
+*   8 Caratteri --> Password da cercare: 2/W.caaa
+*   1: 8712.53 s
+*   32: 709.246 s
+*   64: 366.658 s
+*   128: 374.512 s
+*   256: 342.683 s
+*   512: 179.263 s
+*   1024: 90.5714 s
+*   2048: 41.6371 s
+*   4096: 32.3622
+*   8192: 17.3052 s
+*   16384: 67.4107 s
+*   32768: 40.2187 s
+*   65536: 20.3382 s
+*/
+
+__device__ const char d_allowed_char [] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+                                            'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+                                            'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
+                                            'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F',
+                                            'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                                            'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
+                                            'W', 'X', 'Y', 'Z', '1', '2', '3', '4',
+                                            '5', '6', '7', '8', '9', '0', '.', '/'  };
 __device__ long d_allowed_char_size = sizeof(d_allowed_char) / sizeof(d_allowed_char[0]);
 
 __device__ int d_initial_permutation_table[64] = {
@@ -227,8 +244,8 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
         generate_all_possible_password(current_password, password_length, blockSize, i);
         d_string_to_binary(current_password, password_length, bin_current_password, blockSize);
         cuda_des_encrypt_text(bin_current_password, d_sub_keys, cipher_current_password, blockSize,
-         result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
-         s_box_result, s_box_permuted_result, new_left_block, combined_key);
+        result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
+        s_box_result, s_box_permuted_result, new_left_block, combined_key);
     
         if(isBinaryEqual(cipher_current_password, cipher_password_target, blockSize)){
             printf("Find by thread n. %d! \n", index);
@@ -241,11 +258,11 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
                 printf("%d", cipher_current_password[index * password_length * 8 + j]);
             }
             printf("'\n");
+
             __trap();
             return;
         }
     }
-        
 }
 
 void getGPUProperties(int gpuID) {
@@ -294,12 +311,12 @@ int main() {
     for(int i = 0; i < 64; i++){
         cout << cipher_password_target[i];
     }
-
     cout << endl;
 
     //SETUP CUDA
-    getGPUProperties(0);
-    unsigned int threads_number = 65536;
+    //getGPUProperties(0);
+
+    unsigned int threads_number = 32768;
     int blockSize = 32;
 
     int threads_per_block;
@@ -324,7 +341,7 @@ int main() {
         int mod256 = threads_number % 256;
         int mod128 = threads_number % 128;
         int mod32 = threads_number % 32;
-
+    
         if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
             threads_per_block = threads_number + (32 - mod256);
             blockSize = 256;
