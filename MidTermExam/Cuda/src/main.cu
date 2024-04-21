@@ -19,10 +19,20 @@ using namespace std;
 *   1024: 90.5714 s
 *   2048: 41.6371 s
 *   4096: 32.3622
-*   8192: 17.3052 s
+*   8192: 17.3052 s <-----
 *   16384: 67.4107 s
 *   32768: 40.2187 s
 *   65536: 20.3382 s
+*   65792: 25.5185 s
+*   66048: 25.545 s
+* 
+
+* 7488 576 58.8041 s             <<<Grid Size: 13, Threads per Block: 576>>>
+* 8064 576 31.1302 s             <<<Grid Size: 14, Threads per Block: 576>>>
+* 8640 576 48.9386 s             <<<Grid Size: 15, Threads per Block: 576>>> 0,75% Occupancy
+* 8192 256 17.3052 s             <<<Grid Size: 32, Threads per Block: 256>>> 0,66% Occupancy
+* 8192 128 29.0586 s             <<<Grid Size: 64, Threads per Block: 128>>> 0,75% Occupancy
+* 8192 32  23.9934 s             <<<Grid Size: 256, Threads per Block: 32>>> 0,33% Occupancy
 */
 
 __device__ const char d_allowed_char [] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
@@ -240,13 +250,12 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
 
     long number_of_possible_passwords = (long)pow((double)d_allowed_char_size,(double)(password_length));
     for(long i = index; i < number_of_possible_passwords; i += threads_number){
-        //printf("iteration %d \n", i);
         generate_all_possible_password(current_password, password_length, blockSize, i);
         d_string_to_binary(current_password, password_length, bin_current_password, blockSize);
         cuda_des_encrypt_text(bin_current_password, d_sub_keys, cipher_current_password, blockSize,
         result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
         s_box_result, s_box_permuted_result, new_left_block, combined_key);
-    
+            
         if(isBinaryEqual(cipher_current_password, cipher_password_target, blockSize)){
             printf("Find by thread n. %d! \n", index);
             printf("password is: '");
@@ -305,7 +314,7 @@ int main() {
     cout << endl;
 
     //SETUP TARGET PASSWORD
-    const char* password = "2/W.caaa";
+    const char* password = "2/W.caaa";//"2/W.caaa";
     int* cipher_password_target = des_encrypt_text(password, d_sub_keys_1d);
     cout << "Password to find: '" << password << "' encrypted with DES: ";
     for(int i = 0; i < 64; i++){
@@ -316,7 +325,7 @@ int main() {
     //SETUP CUDA
     //getGPUProperties(0);
 
-    unsigned int threads_number = 32768;
+    unsigned int threads_number = 8192;
     int blockSize = 32;
 
     int threads_per_block;
@@ -326,17 +335,17 @@ int main() {
         threads_per_block = threads_number;
         num_block = 1;
     } else if ((threads_number % 256) == 0){
-            threads_per_block = 256;
-            num_block = threads_number / 256;
-            blockSize = 256;
+        threads_per_block = 256;
+        num_block = threads_number / 256;
+        blockSize = 256;
     } else if ((threads_number % 128) == 0){
-            threads_per_block = 128;
-            num_block = threads_number / 128;
-            blockSize = 128;
+        threads_per_block = 128;
+        num_block = threads_number / 128;
+        blockSize = 128;
     } else if ((threads_number % 32) == 0){
-            threads_per_block = 32;
-            num_block = threads_number / 32;
-            blockSize = 32;
+        threads_per_block = 32;
+        num_block = threads_number / 32;
+        blockSize = 32;
     } else {
         int mod256 = threads_number % 256;
         int mod128 = threads_number % 128;
