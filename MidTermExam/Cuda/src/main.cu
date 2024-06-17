@@ -24,15 +24,16 @@ using namespace std;
 *   32768: 40.2187 s
 *   65536: 20.3382 s
 *   65792: 25.5185 s
-*   66048: 25.545 s
 * 
 
-* 7488 576 58.8041 s             <<<Grid Size: 13, Threads per Block: 576>>>
-* 8064 576 31.1302 s             <<<Grid Size: 14, Threads per Block: 576>>>
-* 8640 576 48.9386 s             <<<Grid Size: 15, Threads per Block: 576>>> 0,75% Occupancy
-* 8192 256 17.3052 s             <<<Grid Size: 32, Threads per Block: 256>>> 0,66% Occupancy
-* 8192 128 29.0586 s             <<<Grid Size: 64, Threads per Block: 128>>> 0,75% Occupancy
-* 8192 32  23.9934 s             <<<Grid Size: 256, Threads per Block: 32>>> 0,33% Occupancy
+* 7488  576 58.8041 s             <<<Grid Size: 13, Threads per Block: 576>>>
+* 8064  576 31.1302 s             <<<Grid Size: 14, Threads per Block: 576>>>
+* 8640  576 48.9386 s             <<<Grid Size: 15, Threads per Block: 576>>> 0,75% Occupancy
+* 8192  256 17.3052 s             <<<Grid Size: 32, Threads per Block: 256>>> 0,66% Occupancy
+* 8192  128 29.0586 s             <<<Grid Size: 64, Threads per Block: 128>>> 0,75% Occupancy
+* 8192  32  23.9934 s             <<<Grid Size: 256, Threads per Block: 32>>> 0,33% Occupancy
+*
+* 20736 576 54.4345 s             <<<Grid Size: 36, Threads per Block: 576>>>
 */
 
 __device__ const char d_allowed_char [] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
@@ -250,7 +251,7 @@ __global__ void brute_force_attack(int* cipher_password_target, int* d_sub_keys,
 
     long number_of_possible_passwords = (long)pow((double)d_allowed_char_size,(double)(password_length));
     for(long i = index; i < number_of_possible_passwords; i += threads_number){
-        generate_all_possible_password(current_password, password_length, blockSize, i);
+        generate_all_possible_password(current_password, password_length, blockSize, i); 
         d_string_to_binary(current_password, password_length, bin_current_password, blockSize);
         cuda_des_encrypt_text(bin_current_password, d_sub_keys, cipher_current_password, blockSize,
         result_initial_permutation, left_block, right_block, right_expanded, xor_result, 
@@ -287,7 +288,7 @@ void getGPUProperties(int gpuID) {
 }
 
 int main() {
-    //SETUP DES
+
     const char* key = "A4rT9v.w";
     int* des_key = (int*) malloc(64 * sizeof(int));
     string_to_binary(key, 8, des_key);
@@ -314,7 +315,7 @@ int main() {
     cout << endl;
 
     //SETUP TARGET PASSWORD
-    const char* password = "2/W.caaa";//"2/W.caaa";
+    const char* password = "2/W.caaa";
     int* cipher_password_target = des_encrypt_text(password, d_sub_keys_1d);
     cout << "Password to find: '" << password << "' encrypted with DES: ";
     for(int i = 0; i < 64; i++){
@@ -352,7 +353,7 @@ int main() {
         int mod32 = threads_number % 32;
     
         if (mod256 <= 128 && mod256 <= mod128 && mod256 <= mod32) {
-            threads_per_block = threads_number + (32 - mod256);
+            threads_per_block = threads_number + (256 - mod256);
             blockSize = 256;
         } else if (mod128 <= mod32) {
             threads_per_block = threads_number + (128 - mod128);

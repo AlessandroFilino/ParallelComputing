@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import nltk
 import shutil, os
 import requests
 import json
