@@ -1,6 +1,4 @@
 import matplotlib.pyplot as plt
-import nltk
-from nltk.probability import FreqDist
 import shutil, os
 import requests
 import json

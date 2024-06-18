@@ -1,10 +1,27 @@
 from nltk import bigrams as nltk_bigrams, trigrams as nltk_trigrams, FreqDist
 import time
 import os
+from multiprocessing import Pool, Manager, Process
 import asyncio
 import aiohttp
-from multiprocessing import Pool, Manager, Process
+
 from utility import download_gutenberg_book, make_histogram, log_to_file, setup_system, preprocess_text
+
+#10 libri: 2.881 s
+#50 libri: 23.812 s
+# 100 libri: 
+    #32 processes: 29.321 s
+    #16 processes: 28.25 s
+    # --> 8 processes: 27.412 s
+    #7 processes: 27.134 s
+    #6 processes: 28.364 s
+    #5 processes: 28.316 s
+    #4 processes: 30.09 s
+    #3 processes: 33.618 s
+    #2 processes: 31.112 s
+    #1 processes: 38.095 s
+#500 libri: 94.049 s
+#1000 libri: 259.27 s
 
 working_directory = os.path.join(os.getcwd(), "parallel_asyncio")
 
@@ -76,20 +93,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-#10 libri: 2.881 s
-#50 libri: 23.812 s
-# 100 libri: 
-    #32 processes: 29.321 s
-    #16 processes: 28.25 s
-    # --> 8 processes: 27.412 s
-    #7 processes: 27.134 s
-    #6 processes: 28.364 s
-    #5 processes: 28.316 s
-    #4 processes: 30.09 s
-    #3 processes: 33.618 s
-    #2 processes: 31.112 s
-    #1 processes: 38.095 s
-#500 libri: 94.049 s
-#1000 libri: 259.27 s

@@ -5,6 +5,22 @@ from multiprocessing import Pool, Manager, Process
 
 from utility import download_gutenberg_book, make_histogram, preprocess_text, setup_system, log_to_file
 
+#10 libri: 4.497 s
+#50 libri: 19.225 s
+# 100 libri: 
+    #32 processes: 19.614 s
+    #16 processes: 25.66 s
+    # --> 8 processes: 34.54 s
+    #7 processes: 37.588 s
+    #6 processes: 40.983 s
+    #5 processes: 45.382 s
+    #4 processes: 52.69 s
+    #3 processes: 65.117 s
+    #2 processes: 88.605 s
+    #1 processes: 162.874 s
+#500 libri: 150.659 s
+#1000 libri: 335.162 s
+
 working_directory = os.path.join(os.getcwd(), "parallel_multiprocessing")
 
 def process_book(args):
@@ -71,19 +87,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-#10 libri: 4.497 s
-#50 libri: 19.225 s
-# 100 libri: 
-    #32 processes: 19.614 s
-    #16 processes: 25.66 s
-    # --> 8 processes: 34.54 s
-    #7 processes: 37.588 s
-    #6 processes: 40.983 s
-    #5 processes: 45.382 s
-    #4 processes: 52.69 s
-    #3 processes: 65.117 s
-    #2 processes: 88.605 s
-    #1 processes: 162.874 s
-#500 libri: 150.659 s
-#1000 libri: 335.162 s

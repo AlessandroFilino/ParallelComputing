@@ -1,9 +1,15 @@
-from nltk import bigrams as nltk_bigrams, trigrams as nltk_trigrams
-from nltk.probability import FreqDist
+from nltk import bigrams as nltk_bigrams, trigrams as nltk_trigrams, FreqDist
 import queue
 import time
 import os
-from utility import download_gutenberg_book, make_histogram, log_to_file, setup_system, preprocess_text, requests
+
+from utility import download_gutenberg_book, make_histogram, log_to_file, setup_system, preprocess_text
+
+#10 libri: 10.219 s   
+#50 libri: 79.68 s   
+#100 libri: 162.13 s
+#500 libri: 787.209 s
+#1000 libri: 1851.585 s
 
 working_directory = os.path.join(os.getcwd(), "sequential")
 
@@ -40,7 +46,7 @@ def process_book(book, bigrams_shared_queue, trigrams_shared_queue):
 def main(): 
     setup_system(f"{working_directory}/resources/")
        
-    books = 10
+    books = 3
 
     bigrams_shared_queue = queue.Queue()
     trigrams_shared_queue = queue.Queue()
@@ -68,9 +74,3 @@ def main():
     make_histogram(working_directory, "trigrams")
 
 main()
-
-#10 libri: 10.219 s   
-#50 libri: 79.68 s   
-#100 libri: 162.13 s
-#500 libri: 787.209 s
-#1000 libri: 1851.585 s

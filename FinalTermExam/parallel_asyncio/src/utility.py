@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
-import nltk
 import shutil, os
-import aiohttp, aiofiles
+import aiohttp
 import json
 import re
 
@@ -32,7 +31,6 @@ def log_to_file(working_directory, results, ngrams_type):
         json.dump(results_str_keys, json_file, indent=4)
 
     print(f"COMPLETE! Results available in: resources/analysis/analysis_book_{ngrams_type}.json")
-
 
 def make_histogram(working_directory, ngrams_to_plot, plot_all=False):
     with open(f"{working_directory}/resources/analysis/analysis_book_{ngrams_to_plot}.json", 'r', encoding='utf-8') as json_file:

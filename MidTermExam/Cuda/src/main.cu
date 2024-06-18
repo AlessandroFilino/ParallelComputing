@@ -326,7 +326,7 @@ int main() {
     //SETUP CUDA
     //getGPUProperties(0);
 
-    unsigned int threads_number = 8192;
+    unsigned int threads_number = 8064;
     int blockSize = 32;
 
     int threads_per_block;
@@ -335,10 +335,10 @@ int main() {
     if (threads_number <= blockSize){
         threads_per_block = threads_number;
         num_block = 1;
-    } else if ((threads_number % 256) == 0){
-        threads_per_block = 256;
-        num_block = threads_number / 256;
-        blockSize = 256;
+    } else if ((threads_number % 384) == 0){
+        threads_per_block = 384;
+        num_block = threads_number / 384;
+        blockSize = 384;
     } else if ((threads_number % 128) == 0){
         threads_per_block = 128;
         num_block = threads_number / 128;

@@ -77,7 +77,6 @@ def setup_system(directory):
         os.mkdir(directory)
         os.mkdir(os.path.join(directory, "analysis"))
 
-
 def clean_directory(directory):
     try:
         shutil.rmtree(directory)
